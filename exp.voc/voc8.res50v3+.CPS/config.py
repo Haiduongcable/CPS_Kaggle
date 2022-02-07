@@ -26,11 +26,11 @@ else:
     C.volna = '/kaggle/input/dataset-cps/DATA_CPS' # the path to the data dir.
 
 """please config ROOT_dir and user when u first using"""
-C.repo_name = 'TorchSemiSeg'
+C.repo_name = 'CPS_Kaggle'
 C.abs_dir = osp.realpath(".")
 C.this_dir = C.abs_dir.split(osp.sep)[-1]
-
 C.root_dir = C.abs_dir[:C.abs_dir.index(C.repo_name) + len(C.repo_name)]
+
 C.log_dir = osp.abspath('log')
 C.tb_dir = osp.abspath(osp.join(C.log_dir, "tb"))
 
@@ -40,7 +40,7 @@ C.log_dir_link = osp.join(C.abs_dir, 'log')
 if os.getenv('snapshot_dir'):
     C.snapshot_dir = osp.join(os.environ['snapshot_dir'], "snapshot")
 else:
-    C.snapshot_dir = "/kaggle/working/Log"
+    C.snapshot_dir = "/kaggle/working/Log_"
 
 exp_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
 C.log_file = C.log_dir + '/log_' + exp_time + '.log'
