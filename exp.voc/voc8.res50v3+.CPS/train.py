@@ -52,6 +52,7 @@ with Engine(custom_parser=parser) as engine:
     cudnn.benchmark = True
 
     seed = config.seed
+    engine.distributed = True
     if engine.distributed:
         seed = engine.local_rank
     torch.manual_seed(seed)
