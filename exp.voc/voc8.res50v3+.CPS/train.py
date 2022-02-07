@@ -21,7 +21,7 @@ from utils.init_func import init_weight, group_weight
 from engine.lr_policy import WarmUpPolyLR
 from engine.engine import Engine
 from seg_opr.loss_opr import SigmoidFocalLoss, ProbOhemCrossEntropy2d
-# from seg_opr.sync_bn import DataParallelModel, Reduce, BatchNorm2d
+from seg_opr.sync_bn import DataParallelModel, Reduce, BatchNorm2d
 from tensorboardX import SummaryWriter
 
 try:
@@ -52,7 +52,6 @@ with Engine(custom_parser=parser) as engine:
     cudnn.benchmark = True
 
     seed = config.seed
-    engine.distributed = True
     if engine.distributed:
         seed = engine.local_rank
     torch.manual_seed(seed)
