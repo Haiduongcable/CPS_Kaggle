@@ -23,7 +23,7 @@ remoteip = os.popen('pwd').read()
 if os.getenv('volna') is not None:
     C.volna = os.environ['volna']
 else:
-    C.volna = '/kaggle/input/ModelCPS_15_01/TorchSemiSeg' # the path to the data dir.
+    C.volna = '/kaggle/input/dataset-cps/DATA_CPS' # the path to the data dir.
 
 """please config ROOT_dir and user when u first using"""
 C.repo_name = 'TorchSemiSeg'
@@ -40,7 +40,7 @@ C.log_dir_link = osp.join(C.abs_dir, 'log')
 if os.getenv('snapshot_dir'):
     C.snapshot_dir = osp.join(os.environ['snapshot_dir'], "snapshot")
 else:
-    C.snapshot_dir = "/kaggle/input/ModelCPS_15_01/TorchSemiSeg/checkpoint"
+    C.snapshot_dir = "/kaggle/working/Log"
 
 exp_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
 C.log_file = C.log_dir + '/log_' + exp_time + '.log'
@@ -49,10 +49,10 @@ C.val_log_file = C.log_dir + '/val_' + exp_time + '.log'
 C.link_val_log_file = C.log_dir + '/val_last.log'
 
 """ Data Dir and Weight Dir """
-C.dataset_path = osp.join(C.volna, 'DATA/pascal_voc')
+C.dataset_path = osp.join(C.volna, 'pascal_voc')
 C.img_root_folder = C.dataset_path
 C.gt_root_folder = C.dataset_path
-C.pretrained_model = C.volna + 'DATA/pytorch-weight/resnet50_v1c.pth'
+C.pretrained_model = C.volna + 'pytorch-weight/resnet50_v1c.pth'
 
 """ Path Config """
 def add_path(path):
