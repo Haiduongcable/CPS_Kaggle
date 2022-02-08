@@ -190,17 +190,17 @@ with Engine(custom_parser=parser) as engine:
             max_l = max_l.long()
             max_r = max_r.long()
             cps_loss = criterion(pred_l, max_r) + criterion(pred_r, max_l)
-            dist.all_reduce(cps_loss, dist.ReduceOp.SUM)
+            # dist.all_reduce(cps_loss, dist.ReduceOp.SUM)
             cps_loss = cps_loss / engine.world_size
             cps_loss = cps_loss * config.cps_weight
 
             ### standard cross entropy loss ###
             loss_sup = criterion(pred_sup_l, gts)
-            dist.all_reduce(loss_sup, dist.ReduceOp.SUM)
+            # dist.all_reduce(loss_sup, dist.ReduceOp.SUM)
             loss_sup = loss_sup / engine.world_size
 
             loss_sup_r = criterion(pred_sup_r, gts)
-            dist.all_reduce(loss_sup_r, dist.ReduceOp.SUM)
+            # dist.all_reduce(loss_sup_r, dist.ReduceOp.SUM)
             loss_sup_r = loss_sup_r / engine.world_size
 
             unlabeled_loss = False
