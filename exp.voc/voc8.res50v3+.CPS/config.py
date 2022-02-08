@@ -23,7 +23,7 @@ remoteip = os.popen('pwd').read()
 if os.getenv('volna') is not None:
     C.volna = os.environ['volna']
 else:
-    C.volna = '/kaggle/input/dataset-cps/DATA_CPS' # the path to the data dir.
+    C.volna = '/kaggle/input/dataset-cps/DATA_CPS/' # the path to the data dir.
 
 """please config ROOT_dir and user when u first using"""
 C.repo_name = 'CPS_Kaggle'
