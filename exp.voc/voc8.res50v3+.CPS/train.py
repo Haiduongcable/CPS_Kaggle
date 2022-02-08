@@ -248,7 +248,8 @@ with Engine(custom_parser=parser) as engine:
             run.log(name='Supervised Training Loss right', value=sum_loss_sup_r / len(pbar))
             run.log(name='Supervised Training Loss CPS', value=sum_cps / len(pbar))
 
-
+        torch.save(model.branch1.state_dict(),"/kaggle/working/Log/Model_CPS_branch1.pth")
+        torch.save(model.branch2.state_dict(),"/kaggle/working/Log/Model_CPS_branch2.pth")
         if (epoch > config.nepochs // 2) and (epoch % config.snapshot_iter == 0) or (epoch == config.nepochs - 1):
             if engine.distributed and (engine.local_rank == 0):
                 engine.save_and_link_checkpoint(config.snapshot_dir,

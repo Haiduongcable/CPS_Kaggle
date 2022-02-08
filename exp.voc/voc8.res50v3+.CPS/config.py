@@ -40,7 +40,7 @@ C.log_dir_link = osp.join(C.abs_dir, 'log')
 if os.getenv('snapshot_dir'):
     C.snapshot_dir = osp.join(os.environ['snapshot_dir'], "snapshot")
 else:
-    C.snapshot_dir = "/kaggle/working/Log_"
+    C.snapshot_dir = "/kaggle/working/Log/"
 
 exp_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
 C.log_file = C.log_dir + '/log_' + exp_time + '.log'
