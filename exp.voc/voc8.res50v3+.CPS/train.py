@@ -21,14 +21,15 @@ from utils.init_func import init_weight, group_weight
 from engine.lr_policy import WarmUpPolyLR
 from engine.engine import Engine
 from seg_opr.loss_opr import SigmoidFocalLoss, ProbOhemCrossEntropy2d
-from seg_opr.sync_bn import DataParallelModel, Reduce, BatchNorm2d
+# from seg_opr.sync_bn import DataParallelModel
+from torch.nn import BatchNorm2d
 from tensorboardX import SummaryWriter
 
-try:
-    from apex.parallel import DistributedDataParallel, SyncBatchNorm
-except ImportError:
-    raise ImportError(
-        "Please install apex from https://www.github.com/nvidia/apex .")
+# try:
+#     from apex.parallel import DistributedDataParallel, SyncBatchNorm
+# except ImportError:
+#     raise ImportError(
+#         "Please install apex from https://www.github.com/nvidia/apex .")
 
 try:
     from azureml.core import Run
@@ -129,7 +130,7 @@ with Engine(custom_parser=parser) as engine:
             model = DistributedDataParallel(model)
     else:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = DataParallelModel(model, device_ids=engine.devices)
+        # model = DataParallelModel(model, device_ids=engine.devices)
         model.to(device)
 
     engine.register_state(dataloader=train_loader, model=model,
