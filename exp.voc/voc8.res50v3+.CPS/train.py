@@ -25,6 +25,10 @@ from seg_opr.loss_opr import SigmoidFocalLoss, ProbOhemCrossEntropy2d
 from torch.nn import BatchNorm2d
 from tensorboardX import SummaryWriter
 
+import wandb
+wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
+wandb.init(project = "CPS semi supervised learning")
+
 # try:
 #     from apex.parallel import DistributedDataParallel, SyncBatchNorm
 # except ImportError:
@@ -247,7 +251,9 @@ with Engine(custom_parser=parser) as engine:
             run.log(name='Supervised Training Loss', value=sum_loss_sup / len(pbar))
             run.log(name='Supervised Training Loss right', value=sum_loss_sup_r / len(pbar))
             run.log(name='Supervised Training Loss CPS', value=sum_cps / len(pbar))
-
+        wandb.log({"Supervised Training Loss":  sum_loss_sup / len(pbar)})
+        wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar)})
+        wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar)})
         torch.save(model.branch1.state_dict(),"/kaggle/working/Log/Model_CPS_branch1.pth")
         torch.save(model.branch2.state_dict(),"/kaggle/working/Log/Model_CPS_branch2.pth")
         if (epoch > config.nepochs // 2) and (epoch % config.snapshot_iter == 0) or (epoch == config.nepochs - 1):
