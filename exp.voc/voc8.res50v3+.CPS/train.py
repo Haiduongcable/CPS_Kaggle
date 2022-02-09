@@ -86,12 +86,14 @@ with Engine(custom_parser=parser) as engine:
     model = Network(config.num_classes, criterion=criterion,
                     pretrained_model=config.pretrained_model,
                     norm_layer=BatchNorm2d)
-    init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
-                BatchNorm2d, config.bn_eps, config.bn_momentum,
-                mode='fan_in', nonlinearity='relu')
-    init_weight(model.branch2.business_layer, nn.init.kaiming_normal_,
-                BatchNorm2d, config.bn_eps, config.bn_momentum,
-                mode='fan_in', nonlinearity='relu')
+    # init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
+    #             BatchNorm2d, config.bn_eps, config.bn_momentum,
+    #             mode='fan_in', nonlinearity='relu')
+    # init_weight(model.branch2.business_layer, nn.init.kaiming_normal_,
+    #             BatchNorm2d, config.bn_eps, config.bn_momentum,
+    #             mode='fan_in', nonlinearity='relu')
+    model.branch1.load_state_dict(torch.load("/kaggle/input/model-cps-09-02/Model_CPS_branch1.pth"))
+    model.branch2.load_state_dict(torch.load("/kaggle/input/model-cps-09-02/Model_CPS_branch2.pth"))
 
     # define the learning rate
     base_lr = config.lr
@@ -254,6 +256,8 @@ with Engine(custom_parser=parser) as engine:
         wandb.log({"Supervised Training Loss":  sum_loss_sup / len(pbar)})
         wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar)})
         wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar)})
+        torch.save(optimizer_l.state_dict(), "/kaggle/working/Log/optimizer_l.pth")
+        torch.save(optimizer_r.state_dict(), "/kaggle/working/Log/optimizer_r.pth")
         torch.save(model.branch1.state_dict(),"/kaggle/working/Log/Model_CPS_branch1.pth")
         torch.save(model.branch2.state_dict(),"/kaggle/working/Log/Model_CPS_branch2.pth")
         if (epoch > config.nepochs // 2) and (epoch % config.snapshot_iter == 0) or (epoch == config.nepochs - 1):
