@@ -156,8 +156,8 @@ class Engine(object):
         ''' 如果旧文件存在，先删除 '''
         if os.path.exists(current_epoch_checkpoint):
             os.remove(current_epoch_checkpoint)
-
-        self.save_checkpoint(current_epoch_checkpoint)
+        path_save_checkpoint = "/kaggle/working/Log/epoch-{}.pth".format(self.state.epoch)
+        self.save_checkpoint(path_save_checkpoint)
         last_epoch_checkpoint = osp.join(snapshot_dir,
                                          'epoch-last.pth')
         # link_file(current_epoch_checkpoint, last_epoch_checkpoint)
