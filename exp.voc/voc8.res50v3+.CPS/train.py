@@ -86,14 +86,14 @@ with Engine(custom_parser=parser) as engine:
     model = Network(config.num_classes, criterion=criterion,
                     pretrained_model=config.pretrained_model,
                     norm_layer=BatchNorm2d)
-    # init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
-    #             BatchNorm2d, config.bn_eps, config.bn_momentum,
-    #             mode='fan_in', nonlinearity='relu')
-    # init_weight(model.branch2.business_layer, nn.init.kaiming_normal_,
-    #             BatchNorm2d, config.bn_eps, config.bn_momentum,
-    #             mode='fan_in', nonlinearity='relu')
-    model.branch1.load_state_dict(torch.load("/kaggle/input/model-cps-09-02/Model_CPS_branch1.pth"))
-    model.branch2.load_state_dict(torch.load("/kaggle/input/model-cps-09-02/Model_CPS_branch2.pth"))
+    init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
+                BatchNorm2d, config.bn_eps, config.bn_momentum,
+                mode='fan_in', nonlinearity='relu')
+    init_weight(model.branch2.business_layer, nn.init.kaiming_normal_,
+                BatchNorm2d, config.bn_eps, config.bn_momentum,
+                mode='fan_in', nonlinearity='relu')
+    # model.branch1.load_state_dict(torch.load("/kaggle/input/model-cps-09-02/Model_CPS_branch1.pth"))
+    # model.branch2.load_state_dict(torch.load("/kaggle/input/model-cps-09-02/Model_CPS_branch2.pth"))
 
     # define the learning rate
     base_lr = config.lr
