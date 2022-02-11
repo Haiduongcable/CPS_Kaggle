@@ -260,12 +260,12 @@ with Engine(custom_parser=parser) as engine:
         torch.save(optimizer_r.state_dict(), "/kaggle/working/Log/optimizer_r.pth")
         torch.save(model.branch1.state_dict(),"/kaggle/working/Log/Model_CPS_branch1.pth")
         torch.save(model.branch2.state_dict(),"/kaggle/working/Log/Model_CPS_branch2.pth")
-        if (epoch > config.nepochs // 2) and (epoch % config.snapshot_iter == 0) or (epoch == config.nepochs - 1):
-            if engine.distributed and (engine.local_rank == 0):
-                engine.save_and_link_checkpoint(config.snapshot_dir,
-                                                config.log_dir,
-                                                config.log_dir_link)
-            elif not engine.distributed:
-                engine.save_and_link_checkpoint(config.snapshot_dir,
-                                                config.log_dir,
-                                                config.log_dir_link)
+        # if (epoch > config.nepochs // 2) and (epoch % config.snapshot_iter == 0) or (epoch == config.nepochs - 1):
+        #     if engine.distributed and (engine.local_rank == 0):
+        #         engine.save_and_link_checkpoint(config.snapshot_dir,
+        #                                         config.log_dir,
+        #                                         config.log_dir_link)
+        #     elif not engine.distributed:
+        engine.save_and_link_checkpoint(config.snapshot_dir,
+                                        config.log_dir,
+                                        config.log_dir_link)
