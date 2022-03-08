@@ -51,7 +51,7 @@ C.seed = 12345
 """ Data Dir and Weight Dir """
 
 C.dataset_path = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
-C.img_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_vocc/"
+C.img_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
 C.gt_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
 C.pretrained_model = "/kaggle/input/dataset-cps/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
 C.path_save_checkpoint = "/kaggle/working/CPS_Kaggle/weight"

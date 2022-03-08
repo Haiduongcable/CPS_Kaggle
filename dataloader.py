@@ -157,7 +157,7 @@ class VOC(BaseDataset):
             gt_path = os.path.join(self._gt_path , datadir, 'label', sp[0] + '.png')
         else:       # self-training file
             gt_path = sp[1]
-        print(img_path, gt_path)
+        # print(img_path, gt_path)
         if not self.unsupervised:
             img, gt = self._fetch_data(img_path, gt_path)
         else:
