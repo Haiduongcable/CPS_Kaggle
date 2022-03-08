@@ -68,7 +68,7 @@ class ValPre(object):
         extra_dict = {}
         return img, gt, extra_dict
 
-def get_train_loader(engine, dataset, train_source, unsupervised=False, collate_fn=None):
+def get_train_loader(dataset, train_source, unsupervised=False, collate_fn=None):
     data_setting = {'img_root': config.img_root_folder,
                     'gt_root': config.gt_root_folder,
                     'train_source': train_source,
@@ -84,12 +84,6 @@ def get_train_loader(engine, dataset, train_source, unsupervised=False, collate_
     train_sampler = None
     is_shuffle = True
     batch_size = config.batch_size
-
-    if engine.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(
-            train_dataset)
-        batch_size = config.batch_size // engine.world_size
-        is_shuffle = False
 
     train_loader = data.DataLoader(train_dataset,
                                    batch_size=batch_size,

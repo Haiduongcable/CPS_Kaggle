@@ -37,10 +37,8 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed(seed)
 
 # data loader + unsupervised data loader
-train_loader, train_sampler = get_train_loader(VOC, train_source=config.train_source, \
-                                                unsupervised=False)
-unsupervised_train_loader, unsupervised_train_sampler = get_train_loader(VOC, \
-            train_source=config.unsup_source, unsupervised=True)
+train_loader, train_sampler = get_train_loader(VOC, train_source=config.train_source, unsupervised=False)
+unsupervised_train_loader, unsupervised_train_sampler = get_train_loader(VOC, train_source=config.unsup_source, unsupervised=True)
 
 # config network and criterion
 criterion = nn.CrossEntropyLoss(reduction='mean', ignore_index=255)
