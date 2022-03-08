@@ -109,6 +109,7 @@ class VOC(BaseDataset):
         self._train_source = setting['train_source']
         self._eval_source = setting['eval_source']
         self._file_names = self._get_file_names(split_name)
+        print(len(self._file_names))
         self._file_length = file_length
         self.preprocess = preprocess
         self.pseudo_label = pseudo_label
