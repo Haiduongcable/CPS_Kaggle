@@ -94,7 +94,7 @@ else:
 # if os.getenv('batch_size'):
 #     C.batch_size = int(os.environ['batch_size'])
 # else:
-C.batch_size = 8
+C.batch_size = 6
 C.lr_power = 0.9
 C.momentum = 0.9
 C.weight_decay = 1e-4
