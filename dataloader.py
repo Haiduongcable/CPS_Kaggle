@@ -6,7 +6,7 @@ from torch.utils import data
 import random
 from config import config
 from utils.img_utils import generate_random_crop_pos, random_crop_pad_to_shape
-from datasets.BaseDataset import BaseDataset
+from modules.datasets.BaseDataset import BaseDataset
 
 def random_mirror(img, gt=None):
     if random.random() >= 0.5:
