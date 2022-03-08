@@ -6,7 +6,7 @@ from torch.utils import data
 import random
 from config import config
 from utils.img_utils import generate_random_crop_pos, random_crop_pad_to_shape
-from modules.datasets.BaseDataset import BaseDataset
+from datasets.BaseDataset import BaseDataset
 
 def random_mirror(img, gt=None):
     if random.random() >= 0.5:
@@ -68,7 +68,7 @@ class ValPre(object):
         extra_dict = {}
         return img, gt, extra_dict
 
-def get_train_loader(dataset, train_source, unsupervised=False, collate_fn=None):
+def get_train_loader(engine, dataset, train_source, unsupervised=False, collate_fn=None):
     data_setting = {'img_root': config.img_root_folder,
                     'gt_root': config.gt_root_folder,
                     'train_source': train_source,
@@ -84,8 +84,13 @@ def get_train_loader(dataset, train_source, unsupervised=False, collate_fn=None)
     train_sampler = None
     is_shuffle = True
     batch_size = config.batch_size
-    # print("Get len dataset: ", unsupervised)
-    # print(len(train_dataset))
+
+    if engine.distributed:
+        train_sampler = torch.utils.data.distributed.DistributedSampler(
+            train_dataset)
+        batch_size = config.batch_size // engine.world_size
+        is_shuffle = False
+
     train_loader = data.DataLoader(train_dataset,
                                    batch_size=batch_size,
                                    num_workers=config.num_workers,
@@ -94,16 +99,13 @@ def get_train_loader(dataset, train_source, unsupervised=False, collate_fn=None)
                                    pin_memory=True,
                                    sampler=train_sampler,
                                    collate_fn=collate_fn)
-    # print(len(train_loader))
-    # print(unsupervised)
+
     return train_loader, train_sampler
 
 
 class VOC(BaseDataset):
     def __init__(self, setting, split_name, preprocess=None,
                  file_length=None, training=True, unsupervised=False, pseudo_label=False):
-        # print("uafsd")
-        # print(file_length)
         self.istraining = training
         self.unsupervised = unsupervised
         super(VOC, self).__init__(setting, split_name, preprocess, file_length)
@@ -116,7 +118,6 @@ class VOC(BaseDataset):
         self._file_length = file_length
         self.preprocess = preprocess
         self.pseudo_label = pseudo_label
-        # print(file_length)
 
     def __getitem__(self, index):
         if self._file_length is not None:
@@ -139,6 +140,7 @@ class VOC(BaseDataset):
         '''
         if self.pseudo_label is True:
             img_path = os.path.join(self._img_path ,datadir, 'image', names + '.jpg')
+            print(img_path)
             img = self._open_image(img_path)
             # print(names)
             item_name = names.strip()
