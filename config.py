@@ -49,11 +49,12 @@ C.seed = 12345
 # C.link_val_log_file = C.log_dir + '/val_last.log'
 
 """ Data Dir and Weight Dir """
-C.dataset_path = "/home/haiduong/Documents/Project 3/TorchSemiSeg/DATA_CPS/pascal_voc"
-C.img_root_folder = "/home/haiduong/Documents/Project 3/TorchSemiSeg/DATA_CPS/pascal_voc"
-C.gt_root_folder = "/home/haiduong/Documents/Project 3/TorchSemiSeg/DATA_CPS/pascal_voc"
-C.pretrained_model = "/home/haiduong/Documents/Project 3/TorchSemiSeg/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
-C.path_save_checkpoint = "/home/haiduong/Documents/Project 3/TorchSemiSeg/Implement/weights"
+
+C.dataset_path = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc"
+C.img_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_vocc"
+C.gt_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc"
+C.pretrained_model = "/kaggle/input/dataset-cps/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
+C.path_save_checkpoint = "/kaggle/working/CPS_Kaggle/weight"
 # """ Path Config """
 # def add_path(path):
 #     if path not in sys.path:
@@ -93,8 +94,7 @@ else:
 # if os.getenv('batch_size'):
 #     C.batch_size = int(os.environ['batch_size'])
 # else:
-C.batch_size = 2
-
+C.batch_size = 8
 C.lr_power = 0.9
 C.momentum = 0.9
 C.weight_decay = 1e-4
