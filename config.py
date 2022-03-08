@@ -55,6 +55,17 @@ C.img_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
 C.gt_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
 C.pretrained_model = "/kaggle/input/dataset-cps/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
 C.path_save_checkpoint = "/kaggle/working/CPS_Kaggle/weight"
+
+
+
+#Local 
+
+
+# C.dataset_path = "/home/haiduong/Documents/Project 3/TorchSemiSeg/DATA_CPS/pascal_voc/"
+# C.img_root_folder = "/home/haiduong/Documents/Project 3/TorchSemiSeg/DATA_CPS/pascal_voc/"
+# C.gt_root_folder = "/home/haiduong/Documents/Project 3/TorchSemiSeg/DATA_CPS/pascal_voc/"
+# C.pretrained_model = "/home/haiduong/Documents/Project 3/TorchSemiSeg/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
+# C.path_save_checkpoint = "/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/weights"
 # """ Path Config """
 # def add_path(path):
 #     if path not in sys.path:
