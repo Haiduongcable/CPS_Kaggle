@@ -125,7 +125,7 @@ epoch = 0
 
 save_checkpoint(model, optimizer_l, optimizer_r, epoch)
 model , optimizer_l, optimizer_r, epoch = \
-    load_checkpoint("weights/checkpoint_epoch_0.pth", model, optimizer_l, optimizer_r, epoch)
+    load_checkpoint("weight/checkpoint_epoch_0.pth", model, optimizer_l, optimizer_r, epoch)
 model.train()
 _, pred_sup_l = model(imgs, step=1)
 print(pred_sup_l[0,0,:10,:10])
