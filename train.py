@@ -210,7 +210,7 @@ for epoch in range(s_epoch, config.nepochs):
             optimizer_r.param_groups[i]['lr'] = lr
 
         loss = loss_sup + loss_sup_r + cps_loss
-        print(loss)
+        print(loss_sup.item())
         loss.backward()
         optimizer_l.step()
         optimizer_r.step()
