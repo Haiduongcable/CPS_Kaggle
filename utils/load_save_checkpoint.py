@@ -59,7 +59,7 @@ def load_checkpoint(path_checkpoint, network, optimizer_l, optimizer_r, epoch):
     '''
     state_dict = torch.load(path_checkpoint)
 
-    model = load_model(network, state_dict['model'], True)
+    model = load_model(network, state_dict['model'], False)
     if 'optimizer_l' in state_dict:
        optimizer_l.load_state_dict(state_dict['optimizer_l'])
     if 'optimizer_r' in state_dict:
