@@ -235,20 +235,20 @@ for epoch in range(s_epoch, config.nepochs):
         optimizer_l.step()
         optimizer_r.step()
 
-        # print_str = 'Epoch{}/{}'.format(epoch, config.nepochs) \
-        #             + ' Iter{}/{}:'.format(idx + 1, config.niters_per_epoch) \
-        #             + ' lr=%.2e' % lr \
-        #             + ' loss_sup=%.2f' % loss_sup.item() \
-        #             + ' loss_sup_r=%.2f' % loss_sup_r.item() \
-        #                 + ' loss_cps=%.4f' % cps_loss.item()
+        print_str = 'Epoch{}/{}'.format(epoch, config.nepochs) \
+                    + ' Iter{}/{}:'.format(idx + 1, config.niters_per_epoch) \
+                    + ' lr=%.2e' % lr \
+                    + ' loss_sup=%.2f' % loss_sup.item() \
+                    + ' loss_sup_r=%.2f' % loss_sup_r.item() \
+                        + ' loss_cps=%.4f' % cps_loss.item()
 
         sum_loss_sup += loss_sup.item()
         sum_loss_sup_r += loss_sup_r.item()
         sum_cps += cps_loss.item()
-        # pbar.set_description(print_str, refresh=False)
+        pbar.set_description(print_str, refresh=False)
 
         end_time = time.time()
-    save_checkpoint(model, optimizer_l, optimizer_r, epoch)
+    # save_checkpoint(model, optimizer_l, optimizer_r, epoch)
     # wandb.log({"Supervised Training Loss":  sum_loss_sup / len(pbar)})
     # wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar)})
     # wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar)})
