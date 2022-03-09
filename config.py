@@ -116,7 +116,11 @@ C.momentum = 0.9
 C.weight_decay = 1e-4
 
 C.nepochs = 34
-C.max_samples = max(C.num_train_imgs, C.num_unsup_imgs)     # Define the iterations in an epoch
+# C.max_samples = max(C.num_train_imgs, C.num_unsup_imgs)    
+
+C.max_samples = 100  
+
+# Define the iterations in an epoch
 C.cold_start = 0
 C.niters_per_epoch = int(math.ceil(C.max_samples * 1.0 // C.batch_size))
 C.num_workers = 8
