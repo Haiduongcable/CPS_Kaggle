@@ -130,8 +130,8 @@ print('begin train')
 # epoch = 0
 
 # save_checkpoint(model, optimizer_l, optimizer_r, epoch)
-# model , optimizer_l, optimizer_r, epoch = \
-#     load_checkpoint("weight/checkpoint_epoch_0.pth", model, optimizer_l, optimizer_r, epoch)
+model , optimizer_l, optimizer_r, epoch = \
+    load_checkpoint("/kaggle/input/pretrained-cps/checkpoint_epoch_14.pth", model, optimizer_l, optimizer_r, epoch)
 # model.train()
 # _, pred_sup_l = model(imgs, step=1)
 # print(pred_sup_l[0,0,:10,:10])
@@ -214,17 +214,17 @@ for epoch in range(config.nepochs):
         optimizer_l.step()
         optimizer_r.step()
 
-        print_str = 'Epoch{}/{}'.format(epoch, config.nepochs) \
-                    + ' Iter{}/{}:'.format(idx + 1, config.niters_per_epoch) \
-                    + ' lr=%.2e' % lr \
-                    + ' loss_sup=%.2f' % loss_sup.item() \
-                    + ' loss_sup_r=%.2f' % loss_sup_r.item() \
-                        + ' loss_cps=%.4f' % cps_loss.item()
+        # print_str = 'Epoch{}/{}'.format(epoch, config.nepochs) \
+        #             + ' Iter{}/{}:'.format(idx + 1, config.niters_per_epoch) \
+        #             + ' lr=%.2e' % lr \
+        #             + ' loss_sup=%.2f' % loss_sup.item() \
+        #             + ' loss_sup_r=%.2f' % loss_sup_r.item() \
+        #                 + ' loss_cps=%.4f' % cps_loss.item()
 
         sum_loss_sup += loss_sup.item()
         sum_loss_sup_r += loss_sup_r.item()
         sum_cps += cps_loss.item()
-        pbar.set_description(print_str, refresh=False)
+        # pbar.set_description(print_str, refresh=False)
 
         end_time = time.time()
     save_checkpoint(model, optimizer_l, optimizer_r, epoch)
