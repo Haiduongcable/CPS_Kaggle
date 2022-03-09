@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "train.py", line 46, in <module>
+    train_loader, train_sampler = get_train_loader(VOC, train_source=config.train_source, unsupervised=False)
+  File "/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/dataloader.py", line 81, in get_train_loader
+    train_dataset = dataset(data_setting, "train", train_preprocess,
+  File "/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/dataloader.py", line 105, in __init__
+    super(VOC, self).__init__(setting, split_name, preprocess, file_length)
+  File "/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/modules/datasets/BaseDataset.py", line 26, in __init__
+    self._file_names = self._get_file_names(split_name)
+  File "/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/dataloader.py", line 255, in _get_file_names
+    with open(source) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/subset_train_aug/train_aug_labeled_1-8.txt'

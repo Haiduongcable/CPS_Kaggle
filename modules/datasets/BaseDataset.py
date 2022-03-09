@@ -103,19 +103,20 @@ class BaseDataset(data.Dataset):
 
     def _construct_new_file_names(self, length):
         assert isinstance(length, int)
-        files_len = len(self._file_names)                           # 原来一轮迭代的长度
+        files_len = len(self._file_names)
+        # print(self._file_names)
 
         # 仅使用小部分数据
         if length < files_len:
             return self._file_names[:length]
 
         new_file_names = self._file_names * (length // files_len)   # 按照设定获得的一轮迭代的长度
-
+       
         rand_indices = torch.randperm(files_len).tolist()
         new_indices = rand_indices[:length % files_len]
 
         new_file_names += [self._file_names[i] for i in new_indices]
-
+        # print(len(new_file_names))
         return new_file_names
 
     @staticmethod

@@ -46,7 +46,7 @@ def save_checkpoint(model, optimizer_l, optimizer_r, epoch ):
     del new_state_dict
     print("Saved checkpoint")
 
-def load_checkpoint(path_checkpoint, model, optimizer_l, optimizer_r, epoch):
+def load_checkpoint(path_checkpoint, network, optimizer_l, optimizer_r, epoch):
     '''
     params: path_checkpoint: path to load checkpoint
     params: model: pytorch model (branch 1 branch 2)
@@ -59,7 +59,7 @@ def load_checkpoint(path_checkpoint, model, optimizer_l, optimizer_r, epoch):
     '''
     state_dict = torch.load(path_checkpoint)
 
-    model = load_model(model, state_dict['model'], True)
+    model = load_model(network, state_dict['model'], True)
     if 'optimizer_l' in state_dict:
        optimizer_l.load_state_dict(state_dict['optimizer_l'])
     if 'optimizer_r' in state_dict:

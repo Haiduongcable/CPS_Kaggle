@@ -52,15 +52,15 @@ criterion_csst = nn.MSELoss(reduction='mean')
 
 
 # define and init the model
-model = Network(config.num_classes, criterion=criterion,
+network = Network(config.num_classes, criterion=criterion,
                 pretrained_model=config.pretrained_model,
                 norm_layer=BatchNorm2d)
-init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
-            BatchNorm2d, config.bn_eps, config.bn_momentum,
-            mode='fan_in', nonlinearity='relu')
-init_weight(model.branch2.business_layer, nn.init.kaiming_normal_,
-            BatchNorm2d, config.bn_eps, config.bn_momentum,
-            mode='fan_in', nonlinearity='relu')
+# init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
+#             BatchNorm2d, config.bn_eps, config.bn_momentum,
+#             mode='fan_in', nonlinearity='relu')
+# init_weight(model.branch2.business_layer, nn.init.kaiming_normal_,
+#             BatchNorm2d, config.bn_eps, config.bn_momentum,
+#             mode='fan_in', nonlinearity='relu')
 # model.branch1.load_state_dict(torch.load("/kaggle/input/model-cps-09-02/Model_CPS_branch1.pth"))
 # model.branch2.load_state_dict(torch.load("/kaggle/input/model-cps-09-02/Model_CPS_branch2.pth"))
 
@@ -69,9 +69,9 @@ base_lr = config.lr
 
 # define the two optimizers
 params_list_l = []
-params_list_l = group_weight(params_list_l, model.branch1.backbone,
+params_list_l = group_weight(params_list_l, network.branch1.backbone,
                             BatchNorm2d, base_lr)
-for module in model.branch1.business_layer:
+for module in network.branch1.business_layer:
     params_list_l = group_weight(params_list_l, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
 
@@ -81,9 +81,9 @@ optimizer_l = torch.optim.SGD(params_list_l,
                             weight_decay=config.weight_decay)
 
 params_list_r = []
-params_list_r = group_weight(params_list_r, model.branch2.backbone,
+params_list_r = group_weight(params_list_r, network.branch2.backbone,
                             BatchNorm2d, base_lr)
-for module in model.branch2.business_layer:
+for module in network.branch2.business_layer:
     params_list_r = group_weight(params_list_r, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
 
@@ -100,18 +100,18 @@ lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niter
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # model = DataParallelModel(model, device_ids=engine.devices)
-model.to(device)
+network.to(device)
 
 # engine.register_state(dataloader=train_loader, model=model,
 #                         optimizer_l=optimizer_l, optimizer_r=optimizer_r)
 # if engine.continue_state_object:
 #     engine.restore_checkpoint()
 
-model.train()
+# model.train()
 
 print('begin train')
 
-# # model.eval()
+# model.train()
 # dataloader = iter(train_loader)
 # unsupervised_dataloader = iter(unsupervised_train_loader)
 # minibatch = dataloader.next()
@@ -127,12 +127,12 @@ print('begin train')
 # b, c, h, w = imgs.shape
 # _, pred_sup_l = model(imgs, step=1)
 # print(pred_sup_l[0,0,:10,:10])
-epoch = 0
+# epoch = 0
 
 # save_checkpoint(model, optimizer_l, optimizer_r, epoch)
 model , optimizer_l, optimizer_r, epoch = \
-    load_checkpoint("/kaggle/input/pretrained-cps/checkpoint_epoch_14.pth", model, optimizer_l, optimizer_r, epoch)
-# model.train()
+    load_checkpoint("/kaggle/input/pretrained-cps/checkpoint_epoch_14.pth", network, optimizer_l, optimizer_r, epoch)
+model.train()
 # _, pred_sup_l = model(imgs, step=1)
 # print(pred_sup_l[0,0,:10,:10])
 for epoch in range(config.nepochs):
