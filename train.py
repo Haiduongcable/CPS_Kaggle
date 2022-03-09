@@ -127,7 +127,7 @@ print('begin train')
 # b, c, h, w = imgs.shape
 # _, pred_sup_l = model(imgs, step=1)
 # print(pred_sup_l[0,0,:10,:10])
-# epoch = 0
+epoch = 0
 
 # save_checkpoint(model, optimizer_l, optimizer_r, epoch)
 model , optimizer_l, optimizer_r, epoch = \
