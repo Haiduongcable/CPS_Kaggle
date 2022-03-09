@@ -26,6 +26,7 @@ def load_model(model, model_file, is_restore=False):
     t_start = time.time()
 
     if model_file is None:
+        print("Hallo not found checkpoint")
         return model
 
     if isinstance(model_file, str):
