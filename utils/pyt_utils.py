@@ -50,6 +50,9 @@ def load_model(model, model_file, is_restore=False):
     own_keys = set(model.state_dict().keys())
     missing_keys = own_keys - ckpt_keys
     unexpected_keys = ckpt_keys - own_keys
+    
+    print(missing_keys)
+    print(unexpected_keys)
 
     del state_dict
     t_end = time.time()
