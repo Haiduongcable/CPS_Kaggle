@@ -28,11 +28,11 @@ from tensorboardX import SummaryWriter
 
 import wandb
 
-# os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
+os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
-# wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
+wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-# wandb.init(project = "Cross Pseudo Label")
+wandb.init(project = "Cross Pseudo Label Finetune")
 
 
 cudnn.benchmark = True
@@ -235,23 +235,23 @@ for epoch in range(s_epoch, config.nepochs):
         optimizer_l.step()
         optimizer_r.step()
 
-        print_str = 'Epoch{}/{}'.format(epoch, config.nepochs) \
-                    + ' Iter{}/{}:'.format(idx + 1, config.niters_per_epoch) \
-                    + ' lr=%.2e' % lr \
-                    + ' loss_sup=%.2f' % loss_sup.item() \
-                    + ' loss_sup_r=%.2f' % loss_sup_r.item() \
-                        + ' loss_cps=%.4f' % cps_loss.item()
+        # print_str = 'Epoch{}/{}'.format(epoch, config.nepochs) \
+        #             + ' Iter{}/{}:'.format(idx + 1, config.niters_per_epoch) \
+        #             + ' lr=%.2e' % lr \
+        #             + ' loss_sup=%.2f' % loss_sup.item() \
+        #             + ' loss_sup_r=%.2f' % loss_sup_r.item() \
+        #                 + ' loss_cps=%.4f' % cps_loss.item()
 
         sum_loss_sup += loss_sup.item()
         sum_loss_sup_r += loss_sup_r.item()
         sum_cps += cps_loss.item()
-        pbar.set_description(print_str, refresh=False)
+        # pbar.set_description(print_str, refresh=False)
 
         end_time = time.time()
     print("Supervised Training Loss: ", sum_loss_sup / len(pbar))
     print("Supervised Training Loss right: ", sum_loss_sup_r / len(pbar))
     print("Supervised Training Loss CPS: ",  sum_cps / len(pbar))
-    # save_checkpoint(model, optimizer_l, optimizer_r, epoch)
-    # wandb.log({"Supervised Training Loss":  sum_loss_sup / len(pbar)})
-    # wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar)})
-    # wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar)})
+    save_checkpoint(model, optimizer_l, optimizer_r, epoch)
+    wandb.log({"Supervised Training Loss":  sum_loss_sup / len(pbar)})
+    wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar)})
+    wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar)})
