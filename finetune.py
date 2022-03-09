@@ -151,7 +151,7 @@ s_epoch = 0
 
 # save_checkpoint(model, optimizer_l, optimizer_r, epoch)
 model , optimizer_l, optimizer_r, s_epoch = \
-    load_checkpoint("/kaggle/input/pretrained-test/checkpoint_epoch_22.pth", network, optimizer_l, optimizer_r, s_epoch)
+    load_checkpoint("/kaggle/input/pretrained-cps/checkpoint_epoch_14.pth", network, optimizer_l, optimizer_r, s_epoch)
 model.train()
 # _, pred_sup_l = model(imgs, step=1)
 # print(pred_sup_l[0,0,:10,:10])

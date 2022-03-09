@@ -74,11 +74,11 @@ C.path_save_checkpoint = "/kaggle/working/CPS_Kaggle/weight"
 
 ''' Experiments Setting '''
 C.labeled_ratio = 8     # ratio of labeled set
-# C.train_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_labeled_1-{}.txt".format(C.labeled_ratio))
-# C.unsup_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_unlabeled_1-{}.txt".format(C.labeled_ratio))
+C.train_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_labeled_1-{}.txt".format(C.labeled_ratio))
+C.unsup_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_unlabeled_1-{}.txt".format(C.labeled_ratio))
 
-C.train_source = "/kaggle/input/testmodeldataset/train_aug_labeled_1-8.txt"
-C.unsup_source = "/kaggle/input/testmodeldataset/train_aug_unlabeled_1-8.txt"
+# C.train_source = "/kaggle/input/testmodeldataset/train_aug_labeled_1-8.txt"
+# C.unsup_source = "/kaggle/input/testmodeldataset/train_aug_unlabeled_1-8.txt"
 
 C.eval_source = osp.join(C.dataset_path, "val.txt")
 # C.eval_source =  osp.join(C.dataset_path, "subset_train_aug/train_aug_labeled_1-{}.txt".format(C.labeled_ratio))
@@ -116,9 +116,9 @@ C.momentum = 0.9
 C.weight_decay = 1e-4
 
 C.nepochs = 34
-# C.max_samples = max(C.num_train_imgs, C.num_unsup_imgs)    
+C.max_samples = max(C.num_train_imgs, C.num_unsup_imgs)    
 
-C.max_samples = 100  
+# C.max_samples = 100  
 
 # Define the iterations in an epoch
 C.cold_start = 0
