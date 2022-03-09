@@ -40,7 +40,7 @@ C.seed = 12345
 # if os.getenv('snapshot_dir'):
 #     C.snapshot_dir = osp.join(os.environ['snapshot_dir'], "snapshot")
 # else:
-C.snapshot_dir = "/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/Log"
+C.snapshot_dir = "Log"
 C.log_dir = "Log"
 exp_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
 C.log_file = C.log_dir + '/log_' + exp_time + '.log'
@@ -74,11 +74,11 @@ C.path_save_checkpoint = "/kaggle/working/CPS_Kaggle/weight"
 
 ''' Experiments Setting '''
 C.labeled_ratio = 8     # ratio of labeled set
-# C.train_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_labeled_1-{}.txt".format(C.labeled_ratio))
-# C.unsup_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_unlabeled_1-{}.txt".format(C.labeled_ratio))
+C.train_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_labeled_1-{}.txt".format(C.labeled_ratio))
+C.unsup_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_unlabeled_1-{}.txt".format(C.labeled_ratio))
 
-C.train_source = "/kaggle/input/testmodeldataset/train_aug_labeled_1-8.txt"
-C.unsup_source = "/kaggle/input/testmodeldataset/train_aug_unlabeled_1-8.txt"
+# C.train_source = "/kaggle/input/testmodeldataset/train_aug_labeled_1-8.txt"
+# C.unsup_source = "/kaggle/input/testmodeldataset/train_aug_unlabeled_1-8.txt"
 
 C.eval_source = osp.join(C.dataset_path, "val.txt")
 # C.eval_source =  osp.join(C.dataset_path, "subset_train_aug/train_aug_labeled_1-{}.txt".format(C.labeled_ratio))
@@ -116,9 +116,9 @@ C.momentum = 0.9
 C.weight_decay = 1e-4
 
 C.nepochs = 34
-# C.max_samples = max(C.num_train_imgs, C.num_unsup_imgs)    
+C.max_samples = max(C.num_train_imgs, C.num_unsup_imgs)    
 
-C.max_samples = 100  
+# C.max_samples = 100  
 
 # Define the iterations in an epoch
 C.cold_start = 0
