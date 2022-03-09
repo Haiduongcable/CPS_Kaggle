@@ -248,6 +248,9 @@ for epoch in range(s_epoch, config.nepochs):
         pbar.set_description(print_str, refresh=False)
 
         end_time = time.time()
+    print("Supervised Training Loss: ", sum_loss_sup / len(pbar))
+    print("Supervised Training Loss right: ", sum_loss_sup_r / len(pbar))
+    print("Supervised Training Loss CPS: ",  sum_cps / len(pbar))
     # save_checkpoint(model, optimizer_l, optimizer_r, epoch)
     # wandb.log({"Supervised Training Loss":  sum_loss_sup / len(pbar)})
     # wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar)})
