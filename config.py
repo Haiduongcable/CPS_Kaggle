@@ -115,7 +115,10 @@ C.lr_power = 0.9
 C.momentum = 0.9
 C.weight_decay = 1e-4
 
-C.nepochs = 34
+
+
+C.nepochs = 50
+# C.nepochs = 34
 C.max_samples = max(C.num_train_imgs, C.num_unsup_imgs)    
 
 # C.max_samples = 100  
