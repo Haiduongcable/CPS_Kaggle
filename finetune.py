@@ -32,7 +32,7 @@ os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
 wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label Finetune")
+wandb.init(project = "Cross Pseudo Label Finetune Retrain")
 
 
 cudnn.benchmark = True
@@ -151,7 +151,7 @@ s_epoch = 0
 
 # save_checkpoint(model, optimizer_l, optimizer_r, epoch)
 model , optimizer_l, optimizer_r, s_epoch = \
-    load_checkpoint("/kaggle/input/pretrained-cps/checkpoint_epoch_14.pth", network, optimizer_l, optimizer_r, s_epoch)
+    load_checkpoint("/kaggle/input/retraincheckpoint/checkpoint_epoch_14_retraining.pth", network, optimizer_l, optimizer_r, s_epoch)
 model.train()
 # _, pred_sup_l = model(imgs, step=1)
 # print(pred_sup_l[0,0,:10,:10])
