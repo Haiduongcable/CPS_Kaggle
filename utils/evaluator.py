@@ -85,7 +85,7 @@ class Evaluator(object):
 
         results = open(log_file, 'a')
         link_file(log_file, log_file_link)
-        models = ["/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/SaveCheckpoint/checkpoint_epoch_14.pth"]
+        models = ["/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_14_retraining.pth"]
         for model in models:
             logger.info("Load Model: %s" % model)
             if model is not None:

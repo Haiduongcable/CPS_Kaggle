@@ -1,0 +1,23 @@
+Model: /home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_29.pth
+1 background	91.772%
+2 aeroplane	84.560%
+3 bicycle	37.425%
+4 bird  	79.615%
+5 boat  	48.141%
+6 bottle	60.701%
+7 bus   	88.358%
+8 car   	77.704%
+9 cat   	84.952%
+10 chair	12.496%
+11 cow  	64.229%
+12 diningtable	44.056%
+13 dog  	76.490%
+14 horse	70.307%
+15 motorbike	78.302%
+16 person	80.721%
+17 pottedplant	46.202%
+18 sheep	74.390%
+19 sofa 	38.524%
+20 train	80.340%
+21 tv/monitor	62.583%
+----------------------------     mean_IU 	65.803%	mean_IU_no_back	64.505%	mean_pixel_ACC	92.265%
