@@ -32,7 +32,7 @@ os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
 wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label")
+wandb.init(project = "Cross Pseudo Label change learning rate")
 
 
 cudnn.benchmark = True
