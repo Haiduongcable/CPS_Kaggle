@@ -85,12 +85,13 @@ class Evaluator(object):
 
         results = open(log_file, 'a')
         link_file(log_file, log_file_link)
-        models = ["/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_29.pth",\
-            "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_33.pth",\
-            "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_26.pth",\
-            "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_20.pth",\
-            "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_30.pth",\
-            "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_31.pth"]
+        # models = ["/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_29.pth",\
+        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_33.pth",\
+        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_26.pth",\
+        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_20.pth",\
+        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_30.pth",\
+        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_31.pth"]
+        models = ["/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_29_lr.pth"]
         for model in models:
             logger.info("Load Model: %s" % model)
             if model is not None:
