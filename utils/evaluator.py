@@ -39,78 +39,17 @@ class Evaluator(object):
             ensure_dir(save_path)
         self.show_image = show_image
 
-    def run(self, model_path, model_indice, log_file, log_file_link):
+    def run(self, model_path):
         """There are four evaluation modes:
             1.only eval a .pth model: -e *.pth
             2.only eval a certain epoch: -e epoch
             3.eval all epochs in a given section: -e start_epoch-end_epoch
             4.eval all epochs from a certain started epoch: -e start_epoch-
             """
-        if '.pth' in model_indice:
-            models = [model_indice, ]
-        elif "-" in model_indice:
-            start_epoch = int(model_indice.split("-")[0])
-            end_epoch = model_indice.split("-")[1]
-
-            models = os.listdir(model_path)
-            if "epoch-last.pth" in models:
-                models.remove("epoch-last.pth")
-            sorted_models = [None] * len(models)
-            model_idx = [0] * len(models)
-
-
-            for idx, m in enumerate(models):
-                print(m)
-                num = m.split(".")[0].split("-")[1]
-                model_idx[idx] = num
-                sorted_models[idx] = m
-            model_idx = np.array([int(i) for i in model_idx])
-
-            down_bound = model_idx >= start_epoch
-            up_bound = [True] * len(sorted_models)
-            if end_epoch:
-                end_epoch = int(end_epoch)
-                assert start_epoch < end_epoch
-                up_bound = model_idx <= end_epoch
-            bound = up_bound * down_bound
-            model_slice = np.array(sorted_models)[bound]
-            models = [os.path.join(model_path, model) for model in
-                      model_slice]
-        else:
-            if os.path.exists(model_path) and os.path.exists(os.path.join(model_path, 'epoch-%s.pth' % model_indice)):
-                models = [os.path.join(model_path,
-                                       'epoch-%s.pth' % model_indice), ]
-            else:
-                models = [None]
-
-        results = open(log_file, 'a')
-        link_file(log_file, log_file_link)
-        # models = ["/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_29.pth",\
-        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_33.pth",\
-        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_26.pth",\
-        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_20.pth",\
-        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_30.pth",\
-        #     "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_31.pth"]
-        models = ["/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_29_lr.pth"]
-        for model in models:
-            logger.info("Load Model: %s" % model)
-            if model is not None:
-                self.val_func = load_model(self.network, model)
-            else:
-                logger.info("No model is loaded !!!!!!!")
-                self.val_func = self.network
-            #from IPython import embed; embed()
-            if len(self.devices ) == 1:
-                result_line = self.single_process_evalutation()
-            else:
-                result_line = self.multi_process_evaluation()
-
-            results.write('Model: ' + model + '\n')
-            results.write(result_line)
-            results.write('\n')
-            results.flush()
-
-        results.close()
+        
+        self.val_func = load_model(self.network, model_path)
+        result_line, meanIU = self.single_process_evalutation()
+        return meanIU
 
     def single_process_evalutation(self):
         start_eval_time = time.perf_counter()
@@ -122,11 +61,11 @@ class Evaluator(object):
             dd = self.dataset[idx]
             results_dict = self.func_per_iteration(dd,self.devices[0])
             all_results.append(results_dict)
-        result_line = self.compute_metric(all_results)
+        result_line, meanIU = self.compute_metric(all_results)
         logger.info(
             'Evaluation Elapsed Time: %.2fs' % (
                     time.perf_counter() - start_eval_time))
-        return result_line
+        return result_line, meanIU
 
 
 

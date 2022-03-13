@@ -124,7 +124,8 @@ class SegEvaluator(Evaluator):
         print(len(dataset.get_class_names()))
         result_line = print_iou(iu, mean_pixel_acc,
                                 dataset.get_class_names(), True)
-        return result_line
+        meanIU = np.nanmean(iu)
+        return result_line, meanIU
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -134,8 +135,10 @@ if __name__ == "__main__":
     parser.add_argument('--show_image', '-s', default=False,
                         action='store_true')
     parser.add_argument('--save_path', '-p', default=None)
-
     args = parser.parse_args()
+    
+    path_model = "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_44.pth"
+    
     all_dev = ["cuda"]
 
     network = Network(config.num_classes, criterion=None, norm_layer=nn.BatchNorm2d)
@@ -152,5 +155,4 @@ if __name__ == "__main__":
                                  config.eval_scale_array, config.eval_flip,
                                  all_dev, args.verbose, args.save_path,
                                  args.show_image)
-        segmentor.run(config.snapshot_dir, args.epochs, config.val_log_file,
-                      config.link_val_log_file)
+        segmentor.run(path_model)
