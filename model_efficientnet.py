@@ -49,6 +49,8 @@ class SingleNetwork(nn.Module):
 
     def forward(self, data):
         blocks = self.backbone(data)
+        #print shape ouput of backbone
+        
         v3plus_feature = self.head(blocks)      # (b, c, h, w)
         b, c, h, w = v3plus_feature.shape
 
@@ -171,7 +173,7 @@ class Head(nn.Module):
     def forward(self, f_list):
         f = f_list[-1]
         f = self.aspp(f)
-
+        
         low_level_features = f_list[0]
         low_h, low_w = low_level_features.size(2), low_level_features.size(3)
         low_level_features = self.reduce(low_level_features)
@@ -179,20 +181,24 @@ class Head(nn.Module):
         f = F.interpolate(f, size=(low_h, low_w), mode='bilinear', align_corners=True)
         f = torch.cat((f, low_level_features), dim=1)
         f = self.last_conv(f)
-
         return f
 
 
 if __name__ == '__main__':
     device = torch.device("cuda")
-    model = Network(40, criterion=nn.CrossEntropyLoss(),
-                    pretrained_model=None,
-                    norm_layer=nn.BatchNorm2d)
+    # model = Network(40, criterion=nn.CrossEntropyLoss(),
+    #                 pretrained_model=None,
+    #                 norm_layer=nn.BatchNorm2d)
    
+    
+    
+    model =  SingleNetwork(40, criterion=nn.CrossEntropyLoss(), norm_layer = nn.BatchNorm2d, pretrained_model=None)
     model.to(device)
     model.eval()
-    # summary(model, (3,128,128))
-    # left = torch.randn(2,2, 3, 128, 128)
+    # summary(model, (1,2048,1,1))
+    input_data = torch.randn(2, 3, 256, 256).to(device)
+    output = model(input_data)
+    print(output.shape)
     # right = torch.randn(2, 3, 128, 128)
 
     # print(model.branch1)
