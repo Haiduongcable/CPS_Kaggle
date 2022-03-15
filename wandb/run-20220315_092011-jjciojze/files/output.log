@@ -1,0 +1,41 @@
+1323
+9259
+Loaded pretrained weights for efficientnet-b3
+Loaded pretrained weights for efficientnet-b3
+begin train
+[00:00<?,?it/s]
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+
+[00:04<?,?it/s]
+Traceback (most recent call last):
+  File "train.py", line 191, in <module>
+    _, pred_sup_l = model(imgs, step=1)
+  File "/home/haiduong/anaconda3/envs/myenv/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1051, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/model_efficientnet_backbone.py", line 26, in forward
+    return self.branch1(data)
+  File "/home/haiduong/anaconda3/envs/myenv/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1051, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/model_efficientnet_backbone.py", line 57, in forward
+    v3plus_feature = self.head(blocks)      # (b, c, h, w)
+  File "/home/haiduong/anaconda3/envs/myenv/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1051, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/haiduong/Documents/Project 3/TorchSemiSeg/CPS_Kaggle/model_efficientnet_backbone.py", line 186, in forward
+    f = self.last_conv(f)
+  File "/home/haiduong/anaconda3/envs/myenv/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1051, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/haiduong/anaconda3/envs/myenv/lib/python3.8/site-packages/torch/nn/modules/container.py", line 139, in forward
+    input = module(input)
+  File "/home/haiduong/anaconda3/envs/myenv/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1051, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/haiduong/anaconda3/envs/myenv/lib/python3.8/site-packages/torch/nn/modules/conv.py", line 443, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+  File "/home/haiduong/anaconda3/envs/myenv/lib/python3.8/site-packages/torch/nn/modules/conv.py", line 439, in _conv_forward
+    return F.conv2d(input, weight, bias, self.stride,
+RuntimeError: CUDA out of memory. Tried to allocate 342.00 MiB (GPU 0; 5.81 GiB total capacity; 3.55 GiB already allocated; 344.06 MiB free; 3.88 GiB reserved in total by PyTorch)

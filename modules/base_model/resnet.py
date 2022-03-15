@@ -2,7 +2,8 @@ import functools
 import torch.nn as nn
 
 from utils.pyt_utils import load_model
-
+from torchsummary import summary
+import torch
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
@@ -223,3 +224,12 @@ def resnet152(pretrained_model=None, **kwargs):
     if pretrained_model is not None:
         model = load_model(model, pretrained_model)
     return model
+
+
+if __name__ == '__main__':
+    device = torch.device("cuda")
+    model = resnet50()
+    model.to(device)
+    summary(model, (3,512,512))
+    
+    

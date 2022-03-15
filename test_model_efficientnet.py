@@ -31,10 +31,9 @@ class SingleNetwork(nn.Module):
     def __init__(self, num_classes, criterion, norm_layer, pretrained_model=None):
         '''
         Customize backbone with num channels: [96, 136, 232, 384]
-          #80 - 112 - 192 - 320
         '''
         super(SingleNetwork, self).__init__()
-        model_name = "efficientnet-b0"
+        model_name = "efficientnet-b3"
         self.backbone = EfficientNet_ASPP.from_pretrained(model_name)
         self.dilate = 2
         # for m in self.backbone._blocks[25].children():
@@ -62,24 +61,7 @@ class SingleNetwork(nn.Module):
 
         b, c, h, w = data.shape
         pred = F.interpolate(pred, size=(h, w), mode='bilinear', align_corners=True)
-
-        if self.training:
-            return v3plus_feature, pred
         return pred
-
-    # @staticmethod
-    def _nostride_dilate(self, m, dilate):
-        if isinstance(m, nn.Conv2d):
-            if m.stride == (2, 2):
-                m.stride = (1, 1)
-                if m.kernel_size == (3, 3):
-                    m.dilation = (dilate, dilate)
-                    m.padding = (dilate, dilate)
-
-            else:
-                if m.kernel_size == (3, 3):
-                    m.dilation = (dilate, dilate)
-                    m.padding = (dilate, dilate)
 
 
 class ASPP(nn.Module):
@@ -159,10 +141,10 @@ class Head(nn.Module):
         super(Head, self).__init__()
 
         self.classify_classes = classify_classes
-        self.aspp = ASPP(320, 256, [6, 12, 18], norm_act=norm_act)
+        self.aspp = ASPP(384, 256, [6, 12, 18], norm_act=norm_act)
 
         self.reduce = nn.Sequential(
-            nn.Conv2d(80, 48, 1, bias=False),
+            nn.Conv2d(96, 48, 1, bias=False),
             norm_act(48, momentum=bn_momentum),
             nn.ReLU(),
         )
@@ -198,11 +180,12 @@ if __name__ == '__main__':
     
     model =  SingleNetwork(40, criterion=nn.CrossEntropyLoss(), norm_layer = nn.BatchNorm2d, pretrained_model=None)
     model.to(device)
-    model.eval()
-    # summary(model, (1,2048,1,1))
+    # model.eval()
+    # summary(model, (3,512, 512))
     input_data = torch.randn(2, 3, 256, 256).to(device)
     output = model(input_data)
     print(output.shape)
+    # print(output.shape)
     # right = torch.randn(2, 3, 128, 128)
 
     # print(model.branch1)
