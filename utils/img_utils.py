@@ -130,12 +130,13 @@ def random_mirror(img, gt):
     return img, gt,
 
 
-def random_rotation(img, gt):
+def random_rotation(img, gt=None):
     angle = random.random() * 20 - 10
     h, w = img.shape[:2]
     rotation_matrix = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
     img = cv2.warpAffine(img, rotation_matrix, (w, h), flags=cv2.INTER_LINEAR)
-    gt = cv2.warpAffine(gt, rotation_matrix, (w, h), flags=cv2.INTER_NEAREST)
+    if gt is not None:
+        gt = cv2.warpAffine(gt, rotation_matrix, (w, h), flags=cv2.INTER_NEAREST)
 
     return img, gt
 
@@ -157,23 +158,26 @@ def center_crop(img, shape):
 
 
 def random_crop(img, gt, size):
-    if isinstance(size, numbers.Number):
-        size = (int(size), int(size))
-    else:
-        size = size
+    if random.random() >= 0.5:
+        if isinstance(size, numbers.Number):
+            size = (int(size), int(size))
+        else:
+            size = size
 
-    h, w = img.shape[:2]
-    crop_h, crop_w = size[0], size[1]
+        h, w = img.shape[:2]
+        crop_h, crop_w = size[0], size[1]
 
-    if h > crop_h:
-        x = random.randint(0, h - crop_h + 1)
-        img = img[x:x + crop_h, :, :]
-        gt = gt[x:x + crop_h, :]
+        if h > crop_h:
+            x = random.randint(0, h - crop_h + 1)
+            img = img[x:x + crop_h, :, :]
+            if gt is not None:
+                gt = gt[x:x + crop_h, :]
 
-    if w > crop_w:
-        x = random.randint(0, w - crop_w + 1)
-        img = img[:, x:x + crop_w, :]
-        gt = gt[:, x:x + crop_w]
+        if w > crop_w:
+            x = random.randint(0, w - crop_w + 1)
+            img = img[:, x:x + crop_w, :]
+            if gt is not None:
+                gt = gt[:, x:x + crop_w]
 
     return img, gt
 
@@ -185,3 +189,41 @@ def normalize(img, mean, std):
     img = img / std
 
     return img
+
+
+# def fill(img, h, w):
+#     img = cv2.resize(img, (h, w), cv2.INTER_CUBIC)
+#     return img
+        
+# def horizontal_shift(img,gt = None, ratio=0.15):
+#     if ratio > 1 or ratio < 0:
+#         print('Value should be less than 1 and greater than 0')
+#         return img
+#     ratio = random.uniform(-ratio, ratio)
+#     h, w = img.shape[:2]
+#     to_shift = w*ratio
+#     if ratio > 0:
+#         img = img[:, :int(w-to_shift), :]
+#         if gt is not None:
+#             gt = gt[:, :int(w-to_shift), :]
+#     if ratio < 0:
+#         img = img[:, int(-1*to_shift):, :]
+#         if gt is not None:
+#             gt = gt[:, int(-1*to_shift):, :]
+#     img = fill(img, h, w)
+#     gt = fill(gt, h, w)
+#     return img, gt
+
+
+def brightness(img, low, high):
+    value = random.uniform(low, high)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    hsv = np.array(hsv, dtype = np.float64)
+    hsv[:,:,1] = hsv[:,:,1]*value
+    hsv[:,:,1][hsv[:,:,1]>255]  = 255
+    hsv[:,:,2] = hsv[:,:,2]*value 
+    hsv[:,:,2][hsv[:,:,2]>255]  = 255
+    hsv = np.array(hsv, dtype = np.uint8)
+    img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    return img
+

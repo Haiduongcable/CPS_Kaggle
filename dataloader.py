@@ -5,7 +5,8 @@ import numpy as np
 from torch.utils import data
 import random
 from config import config
-from utils.img_utils import generate_random_crop_pos, random_crop_pad_to_shape
+from utils.img_utils import generate_random_crop_pos, random_crop_pad_to_shape,\
+                random_rotation, random_gaussian_blur, brightness, random_crop
 from modules.datasets.BaseDataset import BaseDataset
 
 def random_mirror(img, gt=None):
@@ -49,6 +50,11 @@ class TrainPre(object):
         Augmenta
         '''
         img, gt = random_mirror(img, gt)
+        img, gt = random_rotation(img, gt)
+        img = brightness(img, 0.75, 1.25)
+        img = random_gaussian_blur(img)
+        img, gt =  random_crop(img, gt, (75,75))
+        
         if config.train_scale_array is not None:
             img, gt, scale = random_scale(img, gt, config.train_scale_array)
 
