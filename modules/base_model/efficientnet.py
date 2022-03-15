@@ -39,7 +39,7 @@ class EfficientNet_ASPP(EfficientNet):
             if drop_connect_rate:
                 drop_connect_rate *= float(idx) / len(self._blocks)  # scale drop connect_rate
             x = block(x, drop_connect_rate=drop_connect_rate)
-            print("MB BLock: ", x.shape)
+            # print("MB BLock: ", x.shape)
             if idx in l_extract_layer:
                 l_block.append(x)
 
