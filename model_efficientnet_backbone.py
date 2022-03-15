@@ -8,7 +8,7 @@ import numpy as np
 from functools import partial
 from collections import OrderedDict
 from config import config
-from modules.base_model import resnet50
+from modules.base_model.efficientnet import EfficientNet_ASPP
 from torchsummary import summary
 
 class Network(nn.Module):
@@ -29,15 +29,18 @@ class Network(nn.Module):
 
 class SingleNetwork(nn.Module):
     def __init__(self, num_classes, criterion, norm_layer, pretrained_model=None):
+        '''
+        Customize backbone with num channels: [96, 136, 232, 384]
+        '''
         super(SingleNetwork, self).__init__()
-        self.backbone = resnet50(pretrained_model, norm_layer=norm_layer,
-                                  bn_eps=config.bn_eps,
-                                  bn_momentum=config.bn_momentum,
-                                  deep_stem=True, stem_width=64)
+        model_name = "efficientnet-b3"
+        self.backbone = EfficientNet_ASPP.from_pretrained(model_name)
         self.dilate = 2
-        for m in self.backbone.layer4.children():
-            m.apply(partial(self._nostride_dilate, dilate=self.dilate))
-            self.dilate *= 2
+        # for m in self.backbone._blocks[25].children():
+        #     m.apply(partial(self._nostride_dilate, dilate=self.dilate))
+        #     self.dilate *= 2
+            
+        #     print("Dilate: ", self.dilate)
 
         self.head = Head(num_classes, norm_layer, config.bn_momentum)
         self.business_layer = []
@@ -155,10 +158,10 @@ class Head(nn.Module):
         super(Head, self).__init__()
 
         self.classify_classes = classify_classes
-        self.aspp = ASPP(2048, 256, [6, 12, 18], norm_act=norm_act)
+        self.aspp = ASPP(384, 256, [6, 12, 18], norm_act=norm_act)
 
         self.reduce = nn.Sequential(
-            nn.Conv2d(256, 48, 1, bias=False),
+            nn.Conv2d(96, 48, 1, bias=False),
             norm_act(48, momentum=bn_momentum),
             nn.ReLU(),
         )

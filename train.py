@@ -15,7 +15,7 @@ import torch.backends.cudnn as cudnn
 
 from config import config
 from dataloader import get_train_loader
-from model import Network
+from model_efficientnet_backbone import Network
 from dataloader import VOC
 from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
@@ -32,7 +32,7 @@ os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
 wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label change learning rate")
+wandb.init(project = "Cross Pseudo Label change learning rate + Backbone")
 
 
 cudnn.benchmark = True

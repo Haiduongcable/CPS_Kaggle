@@ -41,6 +41,13 @@ class TrainPre(object):
 
     def __call__(self, img, gt=None):
         # gt = gt - 1     # label 0 is invalid, this operation transfers label 0 to label 255
+        #Add augmentation
+        '''
+        Augment màu 
+        Augment scale 
+        Augment random cut (Training)
+        Augmenta
+        '''
         img, gt = random_mirror(img, gt)
         if config.train_scale_array is not None:
             img, gt, scale = random_scale(img, gt, config.train_scale_array)

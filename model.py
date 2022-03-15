@@ -189,13 +189,14 @@ if __name__ == '__main__':
                     pretrained_model=None,
                     norm_layer=nn.BatchNorm2d)
    
-    model.to(device)
+    # model.to(device)
     model.eval()
     # summary(model, (3,128,128))
-    # left = torch.randn(2,2, 3, 128, 128)
+    left = torch.randn(2, 3, 128, 128)
+    # left.to(device)
     # right = torch.randn(2, 3, 128, 128)
 
     # print(model.branch1)
 
-    # out = model(left)
-    # print(out.shape)
+    out = model(left)
+    print(out.shape)
