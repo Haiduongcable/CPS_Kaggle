@@ -34,7 +34,7 @@ class SingleNetwork(nn.Module):
           #80 - 112 - 192 - 320
         '''
         super(SingleNetwork, self).__init__()
-        model_name = "efficientnet-b0"
+        model_name = "efficientnet-b2"
         self.backbone = EfficientNet_ASPP.from_pretrained(model_name)
         self.dilate = 2
         # for m in self.backbone._blocks[25].children():
@@ -159,10 +159,10 @@ class Head(nn.Module):
         super(Head, self).__init__()
 
         self.classify_classes = classify_classes
-        self.aspp = ASPP(320, 256, [6, 12, 18], norm_act=norm_act)
+        self.aspp = ASPP(352, 256, [6, 12, 18], norm_act=norm_act)
 
         self.reduce = nn.Sequential(
-            nn.Conv2d(80, 48, 1, bias=False),
+            nn.Conv2d(88, 48, 1, bias=False),
             norm_act(48, momentum=bn_momentum),
             nn.ReLU(),
         )

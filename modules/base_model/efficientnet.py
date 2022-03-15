@@ -30,16 +30,16 @@ class EfficientNet_ASPP(EfficientNet):
         # Stem
         x = self._swish(self._bn0(self._conv_stem(inputs)))
         l_block = []
-        # Blocks
+        # Blocks12 16 21 23
         # l_extract_layer = [12, 17, 23, 25]
-        l_extract_layer = [7, 10, 14, 15]
+        l_extract_layer = [11, 15, 20, 22]
         for idx, block in enumerate(self._blocks):
             
             drop_connect_rate = self._global_params.drop_connect_rate
             if drop_connect_rate:
                 drop_connect_rate *= float(idx) / len(self._blocks)  # scale drop connect_rate
             x = block(x, drop_connect_rate=drop_connect_rate)
-            # print("MB BLock: ", x.shape)
+            print("MB BLock: ", x.shape)
             if idx in l_extract_layer:
                 l_block.append(x)
 
@@ -71,7 +71,7 @@ class EfficientNet_ASPP(EfficientNet):
 if __name__ == '__main__':
     #8-11-15-16
     #80 - 112 - 192 - 320
-    model_name = 'efficientnet-b0'
+    model_name = 'efficientnet-b2'
     device = torch.device("cuda")
     data = np.ones((1,3,512,512), dtype=np.float)
     input_tensor = torch.tensor(data, dtype= torch.float32)
