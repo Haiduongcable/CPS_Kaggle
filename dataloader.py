@@ -8,6 +8,8 @@ from config import config
 from utils.img_utils import generate_random_crop_pos, random_crop_pad_to_shape,\
                 random_rotation, random_gaussian_blur, brightness, random_crop
 from modules.datasets.BaseDataset import BaseDataset
+import random 
+
 
 def random_mirror(img, gt=None):
     if random.random() >= 0.5:
@@ -50,10 +52,15 @@ class TrainPre(object):
         Augmenta
         '''
         img, gt = random_mirror(img, gt)
-        img, gt = random_rotation(img, gt)
-        img = brightness(img, 0.75, 1.25)
-        img = random_gaussian_blur(img)
-        img, gt =  random_crop(img, gt, (75,75))
+        # seed_random = random.random()
+        # if seed_random <= 0.2:
+        #     img, gt = random_rotation(img, gt)
+        # elif 0.2 < seed_random <= 0.4:
+        #     img = brightness(img, 0.75, 1.25)
+        # elif 0.4 < seed_random <= 0.6:
+        #     img = random_gaussian_blur(img)
+        # else:
+        #     img, gt =  random_crop(img, gt, (75,75))
         
         if config.train_scale_array is not None:
             img, gt, scale = random_scale(img, gt, config.train_scale_array)

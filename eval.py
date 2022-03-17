@@ -138,7 +138,7 @@ if __name__ == "__main__":
     parser.add_argument('--save_path', '-p', default=None)
     args = parser.parse_args()
     
-    path_model = "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_31_efficient.pth"
+    path_model = "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_22_efficientnetb2.pth"
     
     all_dev = ["cuda"]
 

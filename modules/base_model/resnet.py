@@ -181,8 +181,6 @@ class ResNet(nn.Module):
         blocks.append(x)
         x = self.layer4(x);
         blocks.append(x)
-        for out_layer in blocks:
-            print(out_layer.shape)
         return blocks
 
 

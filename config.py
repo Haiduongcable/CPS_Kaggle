@@ -105,7 +105,7 @@ C.num_unsup_imgs = 10582 - C.num_train_imgs     # unsupervised samples
 if os.getenv('learning_rate'):
     C.lr = float(os.environ['learning_rate'])
 else:
-    C.lr = 0.001
+    C.lr = 0.00075
 
 # if os.getenv('batch_size'):
 #     C.batch_size = int(os.environ['batch_size'])
