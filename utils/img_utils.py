@@ -142,7 +142,7 @@ def random_rotation(img, gt=None):
 
 
 def random_gaussian_blur(img):
-    gauss_size = random.choice([1, 3, 5, 7])
+    gauss_size = random.choice([1, 3, 5])
     if gauss_size > 1:
         # do the gaussian blur
         img = cv2.GaussianBlur(img, (gauss_size, gauss_size), 0)
