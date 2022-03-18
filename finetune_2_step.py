@@ -93,7 +93,7 @@ print('begin train')
 s_epoch = 0
 
 model , optimizer_l, optimizer_r, s_epoch = \
-    load_checkpoint("/kaggle/input/reloadcheckpoint-14-warmup/checkpoint_epoch_14_aug_warmup.pthh", network, optimizer_l, optimizer_r, s_epoch)
+    load_checkpoint("/kaggle/input/reloadcheckpoint-14-warmup/checkpoint_epoch_14_aug_warmup.pth", network, optimizer_l, optimizer_r, s_epoch)
 model.train()
 
 warmup_lamda_cpsloss = 0.15
