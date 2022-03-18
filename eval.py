@@ -17,8 +17,8 @@ from logger import get_logger
 from utils.metric import hist_info, compute_score
 from dataloader import VOC
 from dataloader import ValPre
-# from model import Network
-from model_efficientnet_backbone import Network
+from model import Network
+# from model_efficientnet_backbone import Network
 
 
 logger = get_logger()
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     parser.add_argument('--save_path', '-p', default=None)
     args = parser.parse_args()
     
-    path_model = "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_22_efficientnetb2.pth"
+    path_model = "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_14_aug_warmup.pth"
     
     all_dev = ["cuda"]
 
