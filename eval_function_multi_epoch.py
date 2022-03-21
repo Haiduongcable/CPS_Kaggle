@@ -122,11 +122,15 @@ class SegEvaluator(Evaluator):
 
         iu, mean_IU, _, mean_pixel_acc = compute_score(hist, correct,
                                                        labeled)
-        print(len(dataset.get_class_names()))
+        # print(len(dataset.get_class_names()))
         result_line = print_iou(iu, mean_pixel_acc,
                                 dataset.get_class_names(), True)
         meanIU = np.nanmean(iu)
         return result_line, meanIU
+
+def get_num_checkpoint(name_checkpoint):
+    num_checkpoint = int(name_checkpoint[17:-4])
+    return num_checkpoint
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -138,8 +142,7 @@ if __name__ == "__main__":
     parser.add_argument('--save_path', '-p', default=None)
     args = parser.parse_args()
     
-    path_model = "/home/haiduong/Documents/Project 3/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_44_warmup.pth"
-    
+    path_folder_checkpoint = "weights"
     all_dev = ["cuda"]
 
     network = Network(config.num_classes, criterion=None, norm_layer=nn.BatchNorm2d)
@@ -156,4 +159,10 @@ if __name__ == "__main__":
                                  config.eval_scale_array, config.eval_flip,
                                  all_dev, args.verbose, args.save_path,
                                  args.show_image)
-        segmentor.run(path_model)
+        
+        for name_checkpoint in sorted(os.listdir(path_folder_checkpoint)):
+            num_checkpoint =  get_num_checkpoint(name_checkpoint)
+            if num_checkpoint >= 25:
+                path_checkpoint = path_folder_checkpoint + "/" + name_checkpoint
+                print("Load checkpoint: ", name_checkpoint)
+                segmentor.run(path_checkpoint)
