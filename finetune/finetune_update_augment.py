@@ -14,7 +14,7 @@ import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 
 from config import config
-from dataloader import get_train_loader
+from dataloader_update_augmentation import get_train_loader
 from model import Network
 from dataloader import VOC
 from utils.init_func import init_weight, group_weight
@@ -32,7 +32,7 @@ os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
 wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label Finetune change LR warmup")
+wandb.init(project = "Cross Pseudo Label change learning rate + Augment + GPU local")
 
 
 cudnn.benchmark = True
@@ -89,20 +89,78 @@ total_iteration = config.nepochs * config.niters_per_epoch
 lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niters_per_epoch * config.warm_up_epoch)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 network.to(device)
+
+# engine.register_state(dataloader=train_loader, model=model,
+#                         optimizer_l=optimizer_l, optimizer_r=optimizer_r)
+# if engine.continue_state_object:
+#     engine.restore_checkpoint()
+
+# model.train()
+# network = Network(config.num_classes, criterion=criterion,
+#                 pretrained_model=config.pretrained_model,
+#                 norm_layer=BatchNorm2d)
+
+# # define the learning rate
+# base_lr = config.lr
+# # define the two optimizers
+# params_list_l = []
+# params_list_l = group_weight(params_list_l, model.branch1.backbone,
+#                             BatchNorm2d, base_lr)
+# for module in model.branch1.business_layer:
+#     params_list_l = group_weight(params_list_l, module, BatchNorm2d,
+#                                 base_lr)        # head lr * 10
+# optimizer_l = torch.optim.SGD(params_list_l,
+#                             lr=base_lr,
+#                             momentum=config.momentum,
+#                             weight_decay=config.weight_decay)
+# params_list_r = []
+# params_list_r = group_weight(params_list_r, model.branch2.backbone,
+#                             BatchNorm2d, base_lr)
+# for module in model.branch2.business_layer:
+#     params_list_r = group_weight(params_list_r, module, BatchNorm2d,
+#                                 base_lr)        # head lr * 10
+# optimizer_r = torch.optim.SGD(params_list_r,
+#                             lr=base_lr,
+#                             momentum=config.momentum,
+#                             weight_decay=config.weight_decay)
+# # config lr policy
+# total_iteration = config.nepochs * config.niters_per_epoch
+# lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niters_per_epoch * config.warm_up_epoch)
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# model.to(device)
+
 print('begin train')
+
+# model.train()
+# dataloader = iter(train_loader)
+# unsupervised_dataloader = iter(unsupervised_train_loader)
+# minibatch = dataloader.next()
+# unsup_minibatch = unsupervised_dataloader.next()
+# imgs = minibatch['data']
+# gts = minibatch['label']
+# unsup_imgs = unsup_minibatch['data']
+# imgs = imgs.cuda(non_blocking=True)
+# unsup_imgs = unsup_imgs.cuda(non_blocking=True)
+# gts = gts.cuda(non_blocking=True)
+
+
+# b, c, h, w = imgs.shape
+# _, pred_sup_l = model(imgs, step=1)
+# print(pred_sup_l[0,0,:10,:10])
 s_epoch = 0
 
+# save_checkpoint(model, optimizer_l, optimizer_r, epoch)
 model , optimizer_l, optimizer_r, s_epoch = \
-    load_checkpoint("/kaggle/input/updatemodelwarmup/checkpoint_epoch_29_warmup.pth", network, optimizer_l, optimizer_r, s_epoch)
+    load_checkpoint("/home/asilla/duongnh/project/Analys_COCO/tmp_folder/CPS_Kaggle/weights/checkpoint_epoch_5.pth", network, optimizer_l, optimizer_r, s_epoch)
 model.train()
-
-warmup_lamda_cpsloss = 0.15
-update_lamda_cpsloss = 0.5
-finetune_lamda_cpsloss = 1
-
+# _, pred_sup_l = model(imgs, step=1)
+# print(pred_sup_l[0,0,:10,:10])
 for epoch in range(s_epoch, config.nepochs):
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
 
+    # if is_debug:
+    #     pbar = tqdm(range(10), file=sys.stdout, bar_format=bar_format)
+    # else:
     pbar = tqdm(range(config.niters_per_epoch), file=sys.stdout, bar_format=bar_format)
 
 
@@ -170,15 +228,8 @@ for epoch in range(s_epoch, config.nepochs):
         optimizer_r.param_groups[1]['lr'] = lr
         for i in range(2, len(optimizer_r.param_groups)):
             optimizer_r.param_groups[i]['lr'] = lr
-            
-        #Multi step training
-        if epoch <= config.nepochs//5:
-            lamda_loss = warmup_lamda_cpsloss
-        elif epoch <= 2*(config.nepochs//5):
-            lamda_loss = update_lamda_cpsloss
-        else:
-            lamda_loss = finetune_lamda_cpsloss
-        loss = loss_sup + loss_sup_r + lamda_loss * cps_loss
+
+        loss = loss_sup + loss_sup_r + cps_loss
         # print(loss_sup.item())
         loss.backward()
         optimizer_l.step()
@@ -197,6 +248,9 @@ for epoch in range(s_epoch, config.nepochs):
         # pbar.set_description(print_str, refresh=False)
 
         end_time = time.time()
+    print("Supervised Training Loss: ", sum_loss_sup / len(pbar))
+    print("Supervised Training Loss right: ", sum_loss_sup_r / len(pbar))
+    print("Supervised Training Loss CPS: ",  sum_cps / len(pbar))
     save_checkpoint(model, optimizer_l, optimizer_r, epoch)
     wandb.log({"Supervised Training Loss":  sum_loss_sup / len(pbar)})
     wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar)})

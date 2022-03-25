@@ -53,12 +53,12 @@ def get_ade_colors():
 def print_iou(iu, mean_pixel_acc, class_names=None, show_no_back=False, no_print=False):
     n = iu.size
     lines = []
-    for i in range(n):
-        if class_names is None:
-            cls = 'Class %d:' % (i+1)
-        else:
-            cls = '%d %s' % (i+1, class_names[i])
-        lines.append('%-8s\t%.3f%%' % (cls, iu[i] * 100))
+    # for i in range(n):
+    #     if class_names is None:
+    #         cls = 'Class %d:' % (i+1)
+    #     else:
+    #         cls = '%d %s' % (i+1, class_names[i])
+    #     lines.append('%-8s\t%.3f%%' % (cls, iu[i] * 100))
     mean_IU = np.nanmean(iu)
     mean_IU_no_back = np.nanmean(iu[1:])
     if show_no_back:

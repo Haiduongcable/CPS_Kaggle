@@ -33,7 +33,7 @@ os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
 wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label change learning rate + 2 step")
+wandb.init(project = "Cross Pseudo Label change learning rate + Augment")
 
 
 cudnn.benchmark = True
@@ -177,8 +177,7 @@ for epoch in range(s_epoch, config.nepochs):
     sum_cps = 0
 
     ''' supervised part '''
-    for idx in range(config.niters_per_epoch):
-        print("Start epoch {}".format(str(idx)))
+    for idx in pbar:
         optimizer_l.zero_grad()
         optimizer_r.zero_grad()
         start_time = time.time()
@@ -248,17 +247,16 @@ for epoch in range(s_epoch, config.nepochs):
         optimizer_l.step()
         optimizer_r.step()
 
-        
+        # print_str = 'Epoch{}/{}'.format(epoch, config.nepochs) \
+        #             + ' Iter{}/{}:'.format(idx + 1, config.niters_per_epoch) \
+        #             + ' lr=%.2e' % lr \
+        #             + ' loss_sup=%.2f' % loss_sup.item() \
+        #             + ' loss_sup_r=%.2f' % loss_sup_r.item() \
+        #                 + ' loss_cps=%.4f' % cps_loss.item()
 
         sum_loss_sup += loss_sup.item()
         sum_loss_sup_r += loss_sup_r.item()
         sum_cps += cps_loss.item()
-        print_str = 'Epoch{}/{}'.format(epoch, config.nepochs) \
-                    + ' Iter{}/{}:'.format(idx + 1, config.niters_per_epoch) \
-                    + ' lr=%.2e' % lr \
-                    + ' loss_sup=%.2f' % loss_sup.item() \
-                    + ' loss_sup_r=%.2f' % loss_sup_r.item() \
-                        + ' loss_cps=%.4f' % cps_loss.item()
         # pbar.set_description(print_str, refresh=False)
 
         end_time = time.time()

@@ -7,8 +7,8 @@ import numpy as np
 
 from functools import partial
 from collections import OrderedDict
-from config import config
-from modules.base_model.efficientnet import EfficientNet_ASPP
+from ..config import config
+from ..modules.base_model import resnet50
 from torchsummary import summary
 
 class Network(nn.Module):
@@ -29,19 +29,15 @@ class Network(nn.Module):
 
 class SingleNetwork(nn.Module):
     def __init__(self, num_classes, criterion, norm_layer, pretrained_model=None):
-        '''
-        Customize backbone with num channels: [96, 136, 232, 384]
-          #80 - 112 - 192 - 320
-        '''
         super(SingleNetwork, self).__init__()
-        model_name = "efficientnet-b2"
-        self.backbone = EfficientNet_ASPP.from_pretrained(model_name)
+        self.backbone = resnet50(pretrained_model, norm_layer=norm_layer,
+                                  bn_eps=config.bn_eps,
+                                  bn_momentum=config.bn_momentum,
+                                  deep_stem=True, stem_width=64)
         self.dilate = 2
-        # for m in self.backbone._blocks[25].children():
-        #     m.apply(partial(self._nostride_dilate, dilate=self.dilate))
-        #     self.dilate *= 2
-            
-        #     print("Dilate: ", self.dilate)
+        for m in self.backbone.layer4.children():
+            m.apply(partial(self._nostride_dilate, dilate=self.dilate))
+            self.dilate *= 2
 
         self.head = Head(num_classes, norm_layer, config.bn_momentum)
         self.business_layer = []
@@ -53,13 +49,10 @@ class SingleNetwork(nn.Module):
 
     def forward(self, data):
         blocks = self.backbone(data)
-        #print shape ouput of backbone
-        
         v3plus_feature = self.head(blocks)      # (b, c, h, w)
         b, c, h, w = v3plus_feature.shape
 
         pred = self.classifier(v3plus_feature)
-
         b, c, h, w = data.shape
         pred = F.interpolate(pred, size=(h, w), mode='bilinear', align_corners=True)
 
@@ -159,10 +152,10 @@ class Head(nn.Module):
         super(Head, self).__init__()
 
         self.classify_classes = classify_classes
-        self.aspp = ASPP(352, 256, [6, 12, 18], norm_act=norm_act)
+        self.aspp = ASPP(2048, 256, [6, 12, 18], norm_act=norm_act)
 
         self.reduce = nn.Sequential(
-            nn.Conv2d(88, 48, 1, bias=False),
+            nn.Conv2d(256, 48, 1, bias=False),
             norm_act(48, momentum=bn_momentum),
             nn.ReLU(),
         )
@@ -177,7 +170,7 @@ class Head(nn.Module):
     def forward(self, f_list):
         f = f_list[-1]
         f = self.aspp(f)
-        
+
         low_level_features = f_list[0]
         low_h, low_w = low_level_features.size(2), low_level_features.size(3)
         low_level_features = self.reduce(low_level_features)
@@ -185,27 +178,24 @@ class Head(nn.Module):
         f = F.interpolate(f, size=(low_h, low_w), mode='bilinear', align_corners=True)
         f = torch.cat((f, low_level_features), dim=1)
         f = self.last_conv(f)
+
         return f
 
 
 if __name__ == '__main__':
     device = torch.device("cuda")
-    # model = Network(40, criterion=nn.CrossEntropyLoss(),
-    #                 pretrained_model=None,
-    #                 norm_layer=nn.BatchNorm2d)
+    model = Network(40, criterion=nn.CrossEntropyLoss(),
+                    pretrained_model=None,
+                    norm_layer=nn.BatchNorm2d)
    
-    
-    
-    model =  SingleNetwork(40, criterion=nn.CrossEntropyLoss(), norm_layer = nn.BatchNorm2d, pretrained_model=None)
-    model.to(device)
+    # model.to(device)
     model.eval()
-    # summary(model, (1,2048,1,1))
-    input_data = torch.randn(2, 3, 256, 256).to(device)
-    output = model(input_data)
-    print(output.shape)
+    # summary(model, (3,128,128))
+    left = torch.randn(2, 3, 128, 128)
+    # left.to(device)
     # right = torch.randn(2, 3, 128, 128)
 
     # print(model.branch1)
 
-    # out = model(left)
-    # print(out.shape)
+    out = model(left)
+    print(out.shape)

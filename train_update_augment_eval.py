@@ -14,10 +14,10 @@ import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 
 from config import config
-from dataloader import get_train_loader
-from model_efficientnet_backbone import Network
-# from model import Network
-from dataloader import VOC
+from dataloader_update_augmentation import get_train_loader
+# from model_efficientnet_backbone import Network
+from model import Network
+from dataloader_update_augmentation import VOC
 from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
 
@@ -26,6 +26,7 @@ from utils.load_save_checkpoint import load_checkpoint, save_checkpoint
 # from seg_opr.sync_bn import DataParallelModel
 from torch.nn import BatchNorm2d
 from tensorboardX import SummaryWriter
+
 cudnn.benchmark = True
 
 seed = config.seed

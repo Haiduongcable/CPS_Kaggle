@@ -54,17 +54,17 @@ class Evaluator(object):
     def single_process_evalutation(self):
         start_eval_time = time.perf_counter()
 
-        logger.info(
-                'GPU %s handle %d data.' % (self.devices[0], self.ndata))
+        # logger.info(
+        #         'GPU %s handle %d data.' % (self.devices[0], self.ndata))
         all_results = []
         for idx in tqdm(range(self.ndata)):
             dd = self.dataset[idx]
             results_dict = self.func_per_iteration(dd,self.devices[0])
             all_results.append(results_dict)
         result_line, meanIU = self.compute_metric(all_results)
-        logger.info(
-            'Evaluation Elapsed Time: %.2fs' % (
-                    time.perf_counter() - start_eval_time))
+        # logger.info(
+        #     'Evaluation Elapsed Time: %.2fs' % (
+        #             time.perf_counter() - start_eval_time))
         return result_line, meanIU
 
 
@@ -81,8 +81,8 @@ class Evaluator(object):
             e_record = min((d + 1) * stride, self.ndata)
             shred_list = list(range(d * stride, e_record))
             device = self.devices[d]
-            logger.info(
-                'GPU %s handle %d data.' % (device, len(shred_list)))
+            # logger.info(
+            #     'GPU %s handle %d data.' % (device, len(shred_list)))
 
             p = self.context.Process(target=self.worker,
                                      args=(shred_list, device))
@@ -103,15 +103,15 @@ class Evaluator(object):
             p.join()
 
         result_line = self.compute_metric(all_results)
-        logger.info(
-            'Evaluation Elapsed Time: %.2fs' % (
-                    time.perf_counter() - start_eval_time))
+        # logger.info(
+        #     'Evaluation Elapsed Time: %.2fs' % (
+        #             time.perf_counter() - start_eval_time))
         return result_line
 
     def worker(self, shred_list, device):
         start_load_time = time.time()
-        logger.info('Load Model on Device %d: %.2fs' % (
-            device, time.time() - start_load_time))
+        # logger.info('Load Model on Device %d: %.2fs' % (
+        #     device, time.time() - start_load_time))
 
         for idx in shred_list:
             dd = self.dataset[idx]
