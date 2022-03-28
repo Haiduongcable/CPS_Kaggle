@@ -4,10 +4,10 @@ import torch
 import numpy as np
 from torch.utils import data
 import random
-from ..config import config
-from ..utils.img_utils import generate_random_crop_pos, random_crop_pad_to_shape,\
+from config import config
+from utils.img_utils import generate_random_crop_pos, random_crop_pad_to_shape,\
                 random_rotation, random_gaussian_blur, brightness, random_crop
-from ..modules.datasets.BaseDataset import BaseDataset
+from modules.datasets.BaseDataset import BaseDataset
 import random 
 
 

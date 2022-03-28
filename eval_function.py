@@ -15,9 +15,8 @@ from utils.visualize import print_iou, show_img
 from utils.evaluator import Evaluator
 from logger import get_logger
 from utils.metric import hist_info, compute_score
-from dataloader import VOC
-from dataloader import ValPre
-from model import Network
+from dataloader.dataloader import ValPre
+from model.model import Network
 # from model_efficientnet_backbone import Network
 
 

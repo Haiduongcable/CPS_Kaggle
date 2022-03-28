@@ -14,7 +14,7 @@ import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 
 from config import config
-from dataloader import get_train_loader
+from dataloader.dataloader import get_train_loader
 # from model import Network
 # from model_efficientnet_backbone import Network
 # from model import Network
@@ -30,8 +30,8 @@ from utils.load_save_checkpoint import load_checkpoint, save_checkpoint
 Eval import
 '''
 from eval_function import SegEvaluator
-from dataloader import VOC
-from dataloader import ValPre
+from dataloader.dataloader import VOC
+from dataloader.dataloader import ValPre
 
 from torch.nn import BatchNorm2d
 from tensorboardX import SummaryWriter
