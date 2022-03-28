@@ -12,10 +12,10 @@ from modules.base_model import resnet50
 from torchsummary import summary
 
 class Network(nn.Module):
-    def __init__(self, num_classes, criterion, norm_layer, pretrained_model=None):
+    def __init__(self, num_classes, norm_layer, pretrained_model=None):
         super(Network, self).__init__()
-        self.branch1 = SingleNetwork(num_classes, criterion, norm_layer, pretrained_model)
-        self.branch2 = SingleNetwork(num_classes, criterion, norm_layer, pretrained_model)
+        self.branch1 = SingleNetwork(num_classes, norm_layer, pretrained_model)
+        self.branch2 = SingleNetwork(num_classes, norm_layer, pretrained_model)
 
     def forward(self, data, step=1):
         if not self.training:
@@ -28,7 +28,7 @@ class Network(nn.Module):
             return self.branch2(data)
 
 class SingleNetwork(nn.Module):
-    def __init__(self, num_classes, criterion, norm_layer, pretrained_model=None):
+    def __init__(self, num_classes, norm_layer, pretrained_model=None):
         super(SingleNetwork, self).__init__()
         self.backbone = resnet50(pretrained_model, norm_layer=norm_layer,
                                   bn_eps=config.bn_eps,
@@ -42,7 +42,6 @@ class SingleNetwork(nn.Module):
         self.head = Head(num_classes, norm_layer, config.bn_momentum)
         self.business_layer = []
         self.business_layer.append(self.head)
-        self.criterion = criterion
 
         self.classifier = nn.Conv2d(256, num_classes, kernel_size=1, bias=True)
         self.business_layer.append(self.classifier)
