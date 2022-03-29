@@ -104,8 +104,10 @@ model.to(device)
 
 print('begin train')
 s_epoch = 0
-model.train()
+lambda_cross_entropy = 1.75
+
 for epoch in range(s_epoch, config.nepochs):
+    model.train()
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
 
     # if is_debug:
@@ -163,19 +165,22 @@ for epoch in range(s_epoch, config.nepochs):
         cps_crossentropy_loss = cross_entropy(pred_l, max_r) + cross_entropy(pred_r, max_l)
         #cross pseudo label diceloss
         cps_dice_loss = dice_loss(max_r, max_l) + dice_loss(max_l, max_r)
+        # print("Cps dice loss: ", cps_dice_loss)
 
-        cps_loss = (cps_crossentropy_loss + cps_dice_loss) * config.cps_weight
+        cps_loss = (lambda_cross_entropy * cps_crossentropy_loss + cps_dice_loss) * config.cps_weight
 
         ### standard cross entropy loss ###
         crossentropy_sup_l_loss = cross_entropy(pred_sup_l, gts)
         dice_sup_l_loss = dice_loss(max_sup_l, gts)
-     
-        loss_sup_l = crossentropy_sup_l_loss + dice_sup_l_loss
+        # print("Supervised dice loss left: ", dice_sup_l_loss)
+
+        loss_sup_l = lambda_cross_entropy * crossentropy_sup_l_loss + dice_sup_l_loss
 
         cross_entropy_sup_r_loss = cross_entropy(pred_sup_r, gts)
         dice_sup_r_loss = dice_loss(max_sup_r, gts)
-    
-        loss_sup_r = cross_entropy_sup_r_loss + dice_sup_r_loss
+        # print("Supervised dice loss right: ", dice_sup_r_loss)
+
+        loss_sup_r = lambda_cross_entropy * cross_entropy_sup_r_loss + dice_sup_r_loss
 
         current_idx = epoch * config.niters_per_epoch + idx
         lr = lr_policy.get_lr(current_idx)

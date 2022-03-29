@@ -15,7 +15,7 @@ def dice_loss(input, target):
     tflat = target.view(-1)
     intersection = (iflat * tflat).sum()
     
-    return 1 - ((2. * intersection + smooth) /
+    return ((2. * intersection + smooth) /
               (iflat.sum() + tflat.sum() + smooth))
 
 
