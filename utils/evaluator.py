@@ -17,7 +17,7 @@ logger = get_logger()
 class Evaluator(object):
     def __init__(self, dataset, class_num, image_mean, image_std, network,
                  multi_scales, is_flip, devices,
-                 verbose=False, save_path=None, show_image=False):
+                 verbose=False, save_path=None, show_image=True):
         self.eval_time = 0
         self.dataset = dataset
         self.ndata = self.dataset.get_length()
