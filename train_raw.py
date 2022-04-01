@@ -14,10 +14,10 @@ import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 
 from config import config
-from dataloader import get_train_loader
+from dataloader.dataloader import get_train_loader
 # from model_efficientnet_backbone import Network
-from model import Network
-from dataloader_update_augmentation import VOC
+from model.model import Network
+from dataloader.dataloader import VOC
 from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
 
@@ -26,6 +26,10 @@ from utils.load_save_checkpoint import load_checkpoint, save_checkpoint
 # from seg_opr.sync_bn import DataParallelModel
 from torch.nn import BatchNorm2d
 from tensorboardX import SummaryWriter
+from eval_function import SegEvaluator
+from dataloader.dataloader import VOC
+from dataloader.dataloader import ValPre
+
 
 import wandb
 
@@ -33,7 +37,7 @@ os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
 wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label change learning rate + Augment")
+wandb.init(project = "Cross Pseudo Label Deeplabv3 + Update optimizers")
 
 
 cudnn.benchmark = True
@@ -53,7 +57,7 @@ criterion_csst = nn.MSELoss(reduction='mean')
 
 
 # define and init the model
-model = Network(config.num_classes, criterion=criterion,
+model = Network(config.num_classes,
                 pretrained_model=config.pretrained_model,
                 norm_layer=BatchNorm2d)
 init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
@@ -71,97 +75,41 @@ params_list_l = group_weight(params_list_l, model.branch1.backbone,
 for module in model.branch1.business_layer:
     params_list_l = group_weight(params_list_l, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
-optimizer_l = torch.optim.SGD(params_list_l,
-                            lr=base_lr,
-                            momentum=config.momentum,
-                            weight_decay=config.weight_decay)
+# optimizer_l = torch.optim.SGD(params_list_l,
+#                             lr=base_lr,
+#                             momentum=config.momentum,
+#                             weight_decay=config.weight_decay)
+optimizer_l = torch.optim.AdamW(params_list_l,
+                            lr=base_lr)
+
 params_list_r = []
 params_list_r = group_weight(params_list_r, model.branch2.backbone,
                             BatchNorm2d, base_lr)
 for module in model.branch2.business_layer:
     params_list_r = group_weight(params_list_r, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
-optimizer_r = torch.optim.SGD(params_list_r,
-                            lr=base_lr,
-                            momentum=config.momentum,
-                            weight_decay=config.weight_decay)
+# optimizer_r = torch.optim.SGD(params_list_r,
+#                             lr=base_lr,
+#                             momentum=config.momentum,
+#                             weight_decay=config.weight_decay)
+
+optimizer_r = torch.optim.AdamW(params_list_r,
+                            lr=base_lr)
 # config lr policy
 total_iteration = config.nepochs * config.niters_per_epoch
 lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niters_per_epoch * config.warm_up_epoch)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
-# engine.register_state(dataloader=train_loader, model=model,
-#                         optimizer_l=optimizer_l, optimizer_r=optimizer_r)
-# if engine.continue_state_object:
-#     engine.restore_checkpoint()
-
-# model.train()
-# network = Network(config.num_classes, criterion=criterion,
-#                 pretrained_model=config.pretrained_model,
-#                 norm_layer=BatchNorm2d)
-
-# # define the learning rate
-# base_lr = config.lr
-# # define the two optimizers
-# params_list_l = []
-# params_list_l = group_weight(params_list_l, model.branch1.backbone,
-#                             BatchNorm2d, base_lr)
-# for module in model.branch1.business_layer:
-#     params_list_l = group_weight(params_list_l, module, BatchNorm2d,
-#                                 base_lr)        # head lr * 10
-# optimizer_l = torch.optim.SGD(params_list_l,
-#                             lr=base_lr,
-#                             momentum=config.momentum,
-#                             weight_decay=config.weight_decay)
-# params_list_r = []
-# params_list_r = group_weight(params_list_r, model.branch2.backbone,
-#                             BatchNorm2d, base_lr)
-# for module in model.branch2.business_layer:
-#     params_list_r = group_weight(params_list_r, module, BatchNorm2d,
-#                                 base_lr)        # head lr * 10
-# optimizer_r = torch.optim.SGD(params_list_r,
-#                             lr=base_lr,
-#                             momentum=config.momentum,
-#                             weight_decay=config.weight_decay)
-# # config lr policy
-# total_iteration = config.nepochs * config.niters_per_epoch
-# lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niters_per_epoch * config.warm_up_epoch)
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# model.to(device)
-
 print('begin train')
 
-# model.train()
-# dataloader = iter(train_loader)
-# unsupervised_dataloader = iter(unsupervised_train_loader)
-# minibatch = dataloader.next()
-# unsup_minibatch = unsupervised_dataloader.next()
-# imgs = minibatch['data']
-# gts = minibatch['label']
-# unsup_imgs = unsup_minibatch['data']
-# imgs = imgs.cuda(non_blocking=True)
-# unsup_imgs = unsup_imgs.cuda(non_blocking=True)
-# gts = gts.cuda(non_blocking=True)
-
-
-# b, c, h, w = imgs.shape
-# _, pred_sup_l = model(imgs, step=1)
-# print(pred_sup_l[0,0,:10,:10])
 s_epoch = 0
 
-# save_checkpoint(model, optimizer_l, optimizer_r, epoch)
-# model , optimizer_l, optimizer_r, s_epoch = \
-#     load_checkpoint("/kaggle/input/pretrained-cps/checkpoint_epoch_14.pth", network, optimizer_l, optimizer_r, s_epoch)
-model.train()
-# _, pred_sup_l = model(imgs, step=1)
-# print(pred_sup_l[0,0,:10,:10])
+
 for epoch in range(s_epoch, config.nepochs):
+    model.train()
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
 
-    # if is_debug:
-    #     pbar = tqdm(range(10), file=sys.stdout, bar_format=bar_format)
-    # else:
     pbar = tqdm(range(config.niters_per_epoch), file=sys.stdout, bar_format=bar_format)
 
 
@@ -235,21 +183,35 @@ for epoch in range(s_epoch, config.nepochs):
         loss.backward()
         optimizer_l.step()
         optimizer_r.step()
-
-        # print_str = 'Epoch{}/{}'.format(epoch, config.nepochs) \
-        #             + ' Iter{}/{}:'.format(idx + 1, config.niters_per_epoch) \
-        #             + ' lr=%.2e' % lr \
-        #             + ' loss_sup=%.2f' % loss_sup.item() \
-        #             + ' loss_sup_r=%.2f' % loss_sup_r.item() \
-        #                 + ' loss_cps=%.4f' % cps_loss.item()
-
         sum_loss_sup += loss_sup.item()
         sum_loss_sup_r += loss_sup_r.item()
         sum_cps += cps_loss.item()
         # pbar.set_description(print_str, refresh=False)
 
         end_time = time.time()
+
+    data_setting = {'img_root': config.img_root_folder,
+                    'gt_root': config.gt_root_folder,
+                    'train_source': config.train_source,
+                    'eval_source': config.eval_source}
+
+    val_pre = ValPre()
+    dataset = VOC(data_setting, 'val', val_pre, training=False)
+
+    with torch.no_grad():
+        segmentor = SegEvaluator(dataset, config.num_classes, config.image_mean,
+                                 config.image_std, None,
+                                 config.eval_scale_array, config.eval_flip,
+                                 ["cuda"], False, None,
+                                 False)
+        m_IOU_deeplabv3_1 = segmentor.run_model(model.branch2)
+        m_IOU_deeplabv3_2 = segmentor.run_model(model.branch1)
+    print("mIOU deeplabv3 branch 1",m_IOU_deeplabv3_1)
+    print("mIOU deeplabv3 branch 1", m_IOU_deeplabv3_2)
+
     save_checkpoint(model, optimizer_l, optimizer_r, epoch)
-    wandb.log({"Supervised Training Loss":  sum_loss_sup / len(pbar)})
-    wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar)})
-    wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar)})
+    wandb.log({"mIOU deeplabv3+ 1":  m_IOU_deeplabv3_1, "epoch": epoch})
+    wandb.log({"mIOU deeplabv3+ 2":  m_IOU_deeplabv3_2, "epoch": epoch})
+    wandb.log({"Supervised Training Loss left":  sum_loss_sup / len(pbar),"epoch": epoch})
+    wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})
+    wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar),"epoch": epoch})

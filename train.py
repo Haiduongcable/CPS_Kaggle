@@ -80,8 +80,9 @@ params_list_l = group_weight(params_list_l, model.branch1.backbone,
 for module in model.branch1.business_layer:
     params_list_l = group_weight(params_list_l, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
-optimizer_l = torch.optim.AdamW(params_list_l,
+optimizer_l = torch.optim.SGD(params_list_l,
                             lr=base_lr,
+                            momentum=config.momentum,
                             weight_decay=config.weight_decay)
 params_list_r = []
 params_list_r = group_weight(params_list_r, model.branch2.backbone,
@@ -89,8 +90,9 @@ params_list_r = group_weight(params_list_r, model.branch2.backbone,
 for module in model.branch2.business_layer:
     params_list_r = group_weight(params_list_r, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
-optimizer_r = torch.optim.AdamW(params_list_r,
+optimizer_r = torch.optim.SGD(params_list_r,
                             lr=base_lr,
+                            momentum=config.momentum,
                             weight_decay=config.weight_decay)
 # config lr policy
 total_iteration = config.nepochs * config.niters_per_epoch
@@ -99,7 +101,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 print('begin train')
 s_epoch = 0
-lambda_cross_entropy = 1
+lambda_cross_entropy = 2
 
 for epoch in range(s_epoch, config.nepochs):
     model.train()
@@ -166,7 +168,7 @@ for epoch in range(s_epoch, config.nepochs):
         #cross entropy loss
         cps_crossentropy_loss = cross_entropy(pred_l, max_r) + cross_entropy(pred_r, max_l)
         #cross pseudo label diceloss
-        cps_dice_loss =  2 * dice_loss(max_r, max_l)
+        cps_dice_loss = dice_loss(max_r, max_l)
         # print("Cps dice loss: ", cps_dice_loss)
 
         cps_loss = (lambda_cross_entropy * cps_crossentropy_loss + cps_dice_loss) * config.cps_weight
