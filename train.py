@@ -35,13 +35,13 @@ from dataloader.dataloader import ValPre
 from torch.nn import BatchNorm2d
 from tensorboardX import SummaryWriter
 
-# import wandb
+import wandb
 
-# os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
+os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
-# wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
+wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-# wandb.init(project = "Cross Pseudo Label change learning rate + Augment")
+wandb.init(project = "Cross Pseudo Label ratio label 4")
 
 
 cudnn.benchmark = True

@@ -52,28 +52,19 @@ C.link_val_log_file = C.log_dir + '/val_last.log'
 
 
 
-# C.dataset_path = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
-# C.img_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
-# C.gt_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
-# C.pretrained_model = "/kaggle/input/dataset-cps/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
-# C.path_save_checkpoint = "/kaggle/working/CPS_Kaggle/weight"
+C.dataset_path = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
+C.img_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
+C.gt_root_folder = "/kaggle/input/dataset-cps/DATA_CPS/pascal_voc/"
+C.pretrained_model = "/kaggle/input/dataset-cps/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
+C.path_save_checkpoint = "/kaggle/working/CPS_Kaggle/weight"
 
 #Local 
 
-
-<<<<<<< HEAD
-C.dataset_path = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
-C.img_root_folder = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
-C.gt_root_folder = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
-C.pretrained_model = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
-C.path_save_checkpoint = "/home/haiduong/Documents/DoAn/TorchSemiSeg/CPS_Kaggle/weights"
-=======
-C.dataset_path = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
-C.img_root_folder = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
-C.gt_root_folder = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
-C.pretrained_model = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
-C.path_save_checkpoint = "weights"
->>>>>>> 065aa70ea121950889a6b2e907770619c497f3b1
+# C.dataset_path = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
+# C.img_root_folder = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
+# C.gt_root_folder = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
+# C.pretrained_model = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
+# C.path_save_checkpoint = "/home/haiduong/Documents/DoAn/TorchSemiSeg/CPS_Kaggle/weights"
 # """ Path Config """
 # def add_path(path):
 #     if path not in sys.path:
@@ -81,7 +72,7 @@ C.path_save_checkpoint = "weights"
 # add_path(osp.join(C.root_dir, 'furnace'))
 
 ''' Experiments Setting '''
-C.labeled_ratio = 8     # ratio of labeled set
+C.labeled_ratio = 4   # ratio of labeled set
 C.train_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_labeled_1-{}.txt".format(C.labeled_ratio))
 C.unsup_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_unlabeled_1-{}.txt".format(C.labeled_ratio))
 
