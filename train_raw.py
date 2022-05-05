@@ -110,7 +110,7 @@ for epoch in range(s_epoch, config.nepochs):
     model.train()
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
 
-    pbar = tqdm(range(config.niters_per_epoch), file=sys.stdout, bar_format=bar_format)
+    pbar = range(config.niters_per_epoch)
 
 
     dataloader = iter(train_loader)
