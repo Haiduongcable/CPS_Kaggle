@@ -143,14 +143,6 @@ class BaseDataset(data.Dataset):
 
         return img
 
-    @classmethod
-    def get_class_colors(*args):
-        raise NotImplementedError
-
-    @classmethod
-    def get_class_names(*args):
-        raise NotImplementedError
-
 
 if __name__ == "__main__":
     data_setting = {'img_root': '',

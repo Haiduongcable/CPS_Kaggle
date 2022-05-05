@@ -61,11 +61,11 @@ C.link_val_log_file = C.log_dir + '/val_last.log'
 #Local 
 
 
-C.dataset_path = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
-C.img_root_folder = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
-C.gt_root_folder = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
-C.pretrained_model = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
-C.path_save_checkpoint = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/CPS_Kaggle/weights"
+C.dataset_path = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
+C.img_root_folder = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
+C.gt_root_folder = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
+C.pretrained_model = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
+C.path_save_checkpoint = "/home/haiduong/Documents/DoAn/TorchSemiSeg/CPS_Kaggle/weights"
 # """ Path Config """
 # def add_path(path):
 #     if path not in sys.path:

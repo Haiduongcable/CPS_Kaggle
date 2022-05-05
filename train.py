@@ -27,13 +27,13 @@ from utils.load_save_checkpoint import load_checkpoint, save_checkpoint
 from torch.nn import BatchNorm2d
 from tensorboardX import SummaryWriter
 
-import wandb
+# import wandb
 
-os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
+# os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
-wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
+# wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label change learning rate + Augment")
+# wandb.init(project = "Cross Pseudo Label change learning rate + Augment")
 
 
 cudnn.benchmark = True
@@ -197,7 +197,7 @@ for epoch in range(s_epoch, config.nepochs):
         ### cps loss ###
         pred_l = torch.cat([pred_sup_l, pred_unsup_l], dim=0)
         pred_r = torch.cat([pred_sup_r, pred_unsup_r], dim=0)
-        _, max_l = torch.max(pred_l, dim=1)
+        _, max_l = torch.max(pred_l, dim=1) #( b * c* h * w)
         _, max_r = torch.max(pred_r, dim=1)
         max_l = max_l.long()
         max_r = max_r.long()

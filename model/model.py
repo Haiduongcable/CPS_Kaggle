@@ -7,8 +7,8 @@ import numpy as np
 
 from functools import partial
 from collections import OrderedDict
-from ..config import config
-from ..modules.base_model import resnet50
+from config import config
+from modules.base_model import resnet50
 from torchsummary import summary
 
 class Network(nn.Module):
