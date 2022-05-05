@@ -31,13 +31,13 @@ from dataloader.dataloader import VOC
 from dataloader.dataloader import ValPre
 
 
-import wandb
+# import wandb
 
-os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
+# os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
-wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
+# wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label Deeplabv3 + Update optimizers")
+# wandb.init(project = "Cross Pseudo Label Deeplabv3 + Update optimizers")
 
 
 cudnn.benchmark = True

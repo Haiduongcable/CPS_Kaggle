@@ -109,7 +109,7 @@ for epoch in range(s_epoch, config.nepochs):
     # if is_debug:
     #     pbar = tqdm(range(10), file=sys.stdout, bar_format=bar_format)
     # else:
-    pbar = tqdm(range(config.niters_per_epoch), file=sys.stdout, bar_format=bar_format)
+    pbar = range(config.niters_per_epoch)
 
 
     dataloader = iter(train_loader)
