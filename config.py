@@ -61,11 +61,19 @@ C.link_val_log_file = C.log_dir + '/val_last.log'
 #Local 
 
 
+<<<<<<< HEAD
 C.dataset_path = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
 C.img_root_folder = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
 C.gt_root_folder = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pascal_voc"
 C.pretrained_model = "/home/haiduong/Documents/DoAn/TorchSemiSeg/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
 C.path_save_checkpoint = "/home/haiduong/Documents/DoAn/TorchSemiSeg/CPS_Kaggle/weights"
+=======
+C.dataset_path = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
+C.img_root_folder = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
+C.gt_root_folder = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
+C.pretrained_model = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
+C.path_save_checkpoint = "weights"
+>>>>>>> 065aa70ea121950889a6b2e907770619c497f3b1
 # """ Path Config """
 # def add_path(path):
 #     if path not in sys.path:
@@ -76,6 +84,13 @@ C.path_save_checkpoint = "/home/haiduong/Documents/DoAn/TorchSemiSeg/CPS_Kaggle/
 C.labeled_ratio = 8     # ratio of labeled set
 C.train_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_labeled_1-{}.txt".format(C.labeled_ratio))
 C.unsup_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_unlabeled_1-{}.txt".format(C.labeled_ratio))
+
+
+#Test code
+# C.train_source = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/sample_test/train_lable_300.txt"
+# C.unsup_source = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/sample_test/train_unlabel_300.txt"
+
+
 
 # C.train_source = "/kaggle/input/testmodeldataset/train_aug_labeled_1-8.txt"
 # C.unsup_source = "/kaggle/input/testmodeldataset/train_aug_unlabeled_1-8.txt"
@@ -117,11 +132,13 @@ C.weight_decay = 1e-4
 
 
 
+#C.nepochs = 50
 C.nepochs = 50
-# C.nepochs = 34
+
+#Test code
 C.max_samples = max(C.num_train_imgs, C.num_unsup_imgs)    
 
-# C.max_samples = 100  
+# C.max_samples = 300
 
 # Define the iterations in an epoch
 C.cold_start = 0

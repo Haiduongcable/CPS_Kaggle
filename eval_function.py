@@ -15,10 +15,15 @@ from utils.visualize import print_iou, show_img
 from utils.evaluator import Evaluator
 from logger import get_logger
 from utils.metric import hist_info, compute_score
+<<<<<<< HEAD
 from dataloader.dataloader import VOC
 from dataloader.dataloader import ValPre
 from model.model import Network
 from utils.dataset_process import get_class_colors
+=======
+from dataloader.dataloader import ValPre
+from model.model import Network
+>>>>>>> 065aa70ea121950889a6b2e907770619c497f3b1
 # from model_efficientnet_backbone import Network
 
 
