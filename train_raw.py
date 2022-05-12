@@ -37,7 +37,7 @@ os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
 wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label Deeplabv3 + Update optimizers")
+wandb.init(project = "Cross Pseudo Label Deeplabv3+ ratio label 4")
 
 
 cudnn.benchmark = True
@@ -75,12 +75,12 @@ params_list_l = group_weight(params_list_l, model.branch1.backbone,
 for module in model.branch1.business_layer:
     params_list_l = group_weight(params_list_l, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
-# optimizer_l = torch.optim.SGD(params_list_l,
-#                             lr=base_lr,
-#                             momentum=config.momentum,
-#                             weight_decay=config.weight_decay)
-optimizer_l = torch.optim.AdamW(params_list_l,
-                            lr=base_lr)
+optimizer_l = torch.optim.SGD(params_list_l,
+                            lr=base_lr,
+                            momentum=config.momentum,
+                            weight_decay=config.weight_decay)
+# optimizer_l = torch.optim.AdamW(params_list_l,
+#                             lr=base_lr)
 
 params_list_r = []
 params_list_r = group_weight(params_list_r, model.branch2.backbone,
@@ -88,13 +88,13 @@ params_list_r = group_weight(params_list_r, model.branch2.backbone,
 for module in model.branch2.business_layer:
     params_list_r = group_weight(params_list_r, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
-# optimizer_r = torch.optim.SGD(params_list_r,
-#                             lr=base_lr,
-#                             momentum=config.momentum,
-#                             weight_decay=config.weight_decay)
+optimizer_r = torch.optim.SGD(params_list_r,
+                            lr=base_lr,
+                            momentum=config.momentum,
+                            weight_decay=config.weight_decay)
 
-optimizer_r = torch.optim.AdamW(params_list_r,
-                            lr=base_lr)
+# optimizer_r = torch.optim.AdamW(params_list_r,
+#                             lr=base_lr)
 # config lr policy
 total_iteration = config.nepochs * config.niters_per_epoch
 lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niters_per_epoch * config.warm_up_epoch)
@@ -134,7 +134,6 @@ for epoch in range(s_epoch, config.nepochs):
         imgs = imgs.cuda(non_blocking=True)
         unsup_imgs = unsup_imgs.cuda(non_blocking=True)
         gts = gts.cuda(non_blocking=True)
-
 
         b, c, h, w = imgs.shape
         _, pred_sup_l = model(imgs, step=1)

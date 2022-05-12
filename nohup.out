@@ -1,0 +1,24 @@
+Traceback (most recent call last):
+  File "train_medical_image_based_hargnet.py", line 36, in <module>
+    wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/site-packages/wandb/sdk/wandb_login.py", line 76, in login
+    configured = _login(**kwargs)
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/site-packages/wandb/sdk/wandb_login.py", line 274, in _login
+    logged_in = wlogin.login()
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/site-packages/wandb/sdk/wandb_login.py", line 135, in login
+    self.login_display()
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/site-packages/wandb/sdk/wandb_login.py", line 141, in login_display
+    active_entity = self._wl._get_entity()
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/site-packages/wandb/sdk/wandb_setup.py", line 181, in _get_entity
+    self._load_viewer()
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/site-packages/wandb/sdk/wandb_setup.py", line 189, in _load_viewer
+    s.query_with_timeout()
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/site-packages/wandb/sdk/lib/server.py", line 30, in query_with_timeout
+    viewer_tuple, viewer_thread = async_viewer()
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/site-packages/wandb/util.py", line 1072, in wrapper
+    result = q.get(True, timeout)
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/queue.py", line 179, in get
+    self.not_empty.wait(remaining)
+  File "/home/asilla/anaconda3/envs/duongnh/lib/python3.7/threading.py", line 300, in wait
+    gotit = waiter.acquire(True, timeout)
+KeyboardInterrupt

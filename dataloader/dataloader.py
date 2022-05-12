@@ -155,7 +155,6 @@ class VOC(BaseDataset):
         '''
         if self.pseudo_label is True:
             img_path = os.path.join(self._img_path ,datadir, 'image', names + '.jpg')
-            print(img_path)
             img = self._open_image(img_path)
             # print(names)
             item_name = names.strip()

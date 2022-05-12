@@ -13,14 +13,10 @@ from config import config
 from utils.pyt_utils import ensure_dir, link_file, load_model, parse_devices
 from utils.visualize import print_iou, show_img
 from utils.evaluator import Evaluator
-from logger import get_logger
 from utils.metric import hist_info, compute_score
 from dataloader.dataloader import ValPre
 from model.model import Network
 # from model_efficientnet_backbone import Network
-
-
-logger = get_logger()
 
 import sys
 import torch
@@ -94,7 +90,6 @@ class SegEvaluator(Evaluator):
 
             'save raw result'
             cv2.imwrite(os.path.join(self.save_path, fn), pred)
-            logger.info('Save the image ' + fn)
 
         if self.show_image:
             colors = self.dataset.get_class_colors

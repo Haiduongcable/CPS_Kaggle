@@ -1,0 +1,2 @@
+python train_raw.py
+python train_segformer_2branch.py
