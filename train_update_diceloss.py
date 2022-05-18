@@ -37,12 +37,11 @@ from tensorboardX import SummaryWriter
 
 import wandb
 
-
 os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
 wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-wandb.init(project = "Cross Pseudo Label 2 Deeplabv3 + Update dice loss")
+wandb.init(project = "Cross Pseudo Label ratio label 4")
 
 
 cudnn.benchmark = True
@@ -110,7 +109,7 @@ for epoch in range(s_epoch, config.nepochs):
     # if is_debug:
     #     pbar = tqdm(range(10), file=sys.stdout, bar_format=bar_format)
     # else:
-    pbar = tqdm(range(config.niters_per_epoch), file=sys.stdout, bar_format=bar_format)
+    pbar = range(config.niters_per_epoch)
 
 
     dataloader = iter(train_loader)
@@ -149,13 +148,7 @@ for epoch in range(s_epoch, config.nepochs):
         ### cps loss ###
         pred_l = torch.cat([pred_sup_l, pred_unsup_l], dim=0)
         pred_r = torch.cat([pred_sup_r, pred_unsup_r], dim=0)
-
-        _, max_sup_l = torch.max(pred_sup_l, dim=1)
-        _, max_sup_r = torch.max(pred_sup_r, dim=1)
-        max_sup_l = max_sup_l.long()
-        max_sup_r = max_sup_r.long()
-
-        _, max_l = torch.max(pred_l, dim=1)
+        _, max_l = torch.max(pred_l, dim=1) #( b * c* h * w)
         _, max_r = torch.max(pred_r, dim=1)
         max_l = max_l.long()
         max_r = max_r.long()
