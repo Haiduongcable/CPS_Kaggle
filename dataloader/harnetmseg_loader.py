@@ -6,6 +6,7 @@ import numpy as np
 import random
 import torch
 from .process_data import expand_dataloader
+import cv2
 
 class PolypDataset(data.Dataset):
     """
@@ -190,6 +191,15 @@ class test_dataset:
             name = name.split('.jpg')[0] + '.png'
         self.index += 1
         return image, gt, name
+    
+    
+    def gamma_correction(self, image_pillow, gamma = 0.65):
+        image_rgb = np.array()
+        invGamma = 1.0 / gamma
+        table = np.array([((i / 255.0) ** invGamma) * 255
+            for i in np.arange(0, 256)]).astype("uint8")
+        # apply gamma correction using the lookup table
+        return cv2.LUT(image, table)
 
     def rgb_loader(self, path):
         with open(path, 'rb') as f:

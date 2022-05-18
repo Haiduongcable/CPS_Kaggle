@@ -26,7 +26,7 @@ from tensorboardX import SummaryWriter
 from eval_function import SegEvaluator
 from dataloader.harnetmseg_loader import get_loader, test_dataset
 
-from utils.losses import structure_loss
+from utils.losses import structure_loss, semi_ce_loss
 
 
 import wandb
@@ -45,6 +45,8 @@ seed = config.seed
 torch.manual_seed(seed)
 if torch.cuda.is_available():
     torch.cuda.manual_seed(seed)
+
+
 
 
 def test(model, path):
@@ -191,6 +193,7 @@ for epoch in range(s_epoch, config.nepochs):
         # max_r = max_r.long()
         pseudo_gts_r = pred_r.sigmoid()
         pseudo_gts_l = pred_l.sigmoid()
+        loss_unsup, pass_rate, neg_loss = semi_ce_loss(pred_l, pseudo_gts_r)
         cps_loss = structure_loss(pred_l, pseudo_gts_r) + structure_loss(pred_r, pseudo_gts_l)
         # dist.all_reduce(cps_loss, dist.ReduceOp.SUM)
         

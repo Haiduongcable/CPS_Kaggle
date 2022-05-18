@@ -66,18 +66,18 @@ def test(model, path, device, path_save_dataset):
         image_vs_gt[:,:,1] = vs_gt
         image_vs_gt[:,:,2] = vs_gt
         image_vs_gt = np.uint8(image_vs_gt)
-        stack_image = np.zeros((image_log.shape[0],10, 3),dtype = np.uint8) + 255
-        im_vsall = cv2.hconcat([image_log,stack_image, image_res,stack_image, image_vs_gt])
-        
         font = cv2.FONT_HERSHEY_SIMPLEX
-        fontScale = 2
+        fontScale = 1
         color = (0, 0, 255)
         thickness = 5
-        im_vsall = cv2.putText(im_vsall, 'Predict', (1700, 100), font, 
+        
+        stack_image = np.zeros((image_log.shape[0],10, 3),dtype = np.uint8) + 255
+        image_res = cv2.putText(image_res, 'Predict', (0, 50), font, 
                         fontScale, color, thickness, cv2.LINE_AA)
-        im_vsall = cv2.putText(im_vsall, 'Groundtruth', (2700, 100), font, 
+        image_vs_gt = cv2.putText(image_vs_gt, 'Groundtruth', (0, 50), font, 
                         fontScale, color, thickness, cv2.LINE_AA)
         
+        im_vsall = cv2.hconcat([image_log,stack_image, image_res,stack_image, image_vs_gt])
         
         N = gt.shape
         smooth = 1
@@ -89,9 +89,12 @@ def test(model, path, device, path_save_dataset):
         loss =  (2 * intersection.sum() + smooth) / (input.sum() + target.sum() + smooth)
         IOU = float((intersection.sum() + smooth) / (input.sum() + target.sum() - intersection.sum() + smooth))
         a =  '{:.4f}'.format(loss)
+        
         mIOU += IOU
+        im_vsall = cv2.putText(im_vsall, "Dice: " + str(round(loss,2)), (0, 50), font, 
+                        fontScale, color, thickness, cv2.LINE_AA)
         # if IOU < 0.7:
-        # cv2.imwrite(path_save_dataset+"/" + name, im_vsall)
+        cv2.imwrite(path_save_dataset+"/" + name, im_vsall)
         a = float(a)
         b = b + a
         
