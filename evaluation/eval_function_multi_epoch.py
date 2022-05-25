@@ -9,16 +9,19 @@ import torch
 import torch.nn as nn
 import torch.multiprocessing as mp
 
-from config import config
+from config.config import config
 from utils.pyt_utils import ensure_dir, link_file, load_model, parse_devices
 from utils.visualize import print_iou, show_img
 from utils.evaluator import Evaluator
+from logger import get_logger
 from utils.metric import hist_info, compute_score
-from dataloader.dataloader import VOC
-from dataloader.dataloader import ValPre
-from model.model import Network
-from utils.dataset_process import get_class_colors
+from dataloader import VOC
+from dataloader import ValPre
+from model import Network
 # from model_efficientnet_backbone import Network
+
+
+logger = get_logger()
 
 import sys
 import torch
@@ -43,6 +46,26 @@ for t in torch._storage_classes:
     if t in ForkingPickler._extra_reducers:
         del ForkingPickler._extra_reducers[t]
 
+def get_class_colors(*args):
+    def uint82bin(n, count=8):
+        """returns the binary of integer n, count refers to amount of bits"""
+        return ''.join([str((n >> y) & 1) for y in range(count - 1, -1, -1)])
+    N = 21
+    cmap = np.zeros((N, 3), dtype=np.uint8)
+    for i in range(N):
+        r, g, b = 0, 0, 0
+        id = i
+        for j in range(7):
+            str_id = uint82bin(id)
+            r = r ^ (np.uint8(str_id[-1]) << (7 - j))
+            g = g ^ (np.uint8(str_id[-2]) << (7 - j))
+            b = b ^ (np.uint8(str_id[-3]) << (7 - j))
+            id = id >> 3
+        cmap[i, 0] = r
+        cmap[i, 1] = g
+        cmap[i, 2] = b
+    class_colors = cmap.tolist()
+    return class_colors[1:]
 
 
 class SegEvaluator(Evaluator):
@@ -72,11 +95,10 @@ class SegEvaluator(Evaluator):
 
             'save raw result'
             cv2.imwrite(os.path.join(self.save_path, fn), pred)
+            logger.info('Save the image ' + fn)
 
-        if True:
-            
-            colors = get_class_colors()
-            print(len(colors))
+        if self.show_image:
+            colors = self.dataset.get_class_colors
             image = img
             clean = np.zeros(label.shape)
             comp_img = show_img(colors, config.background, image, clean,
@@ -102,23 +124,9 @@ class SegEvaluator(Evaluator):
                                                        labeled)
         # print(len(dataset.get_class_names()))
         result_line = print_iou(iu, mean_pixel_acc,
-                                self.dataset.get_class_names(), True)
+                                dataset.get_class_names(), True)
         meanIU = np.nanmean(iu)
         return result_line, meanIU
-    
-    def run_model(self, model):
-        """There are four evaluation modes:
-            1.only eval a .pth model: -e *.pth
-            2.only eval a certain epoch: -e epoch
-            3.eval all epochs in a given section: -e start_epoch-end_epoch
-            4.eval all epochs from a certain started epoch: -e start_epoch-
-            """
-        model.eval()
-        self.val_func = model
-        result_line, meanIU = self.single_process_evalutation()
-        return meanIU
-
-    
 
 def get_num_checkpoint(name_checkpoint):
     num_checkpoint = int(name_checkpoint[17:-4])
@@ -134,7 +142,6 @@ if __name__ == "__main__":
     parser.add_argument('--save_path', '-p', default=None)
     args = parser.parse_args()
     
-    path_model = "/home/haiduong/Documents/DoAn/TorchSemiSeg/SaveCheckpoint/checkpoint_epoch_44_warmup.pth"
     path_folder_checkpoint = "weights"
     all_dev = ["cuda"]
 
@@ -153,9 +160,9 @@ if __name__ == "__main__":
                                  all_dev, args.verbose, args.save_path,
                                  args.show_image)
         
-        # for name_checkpoint in sorted(os.listdir(path_folder_checkpoint)):
-        #     num_checkpoint =  get_num_checkpoint(name_checkpoint)
-        #     if num_checkpoint >= 34 and num_checkpoint <= 40 :
-        #         path_checkpoint = path_folder_checkpoint + "/" + name_checkpoint
-        #         print("Load checkpoint: ", name_checkpoint)
-        segmentor.run(path_model)
+        for name_checkpoint in sorted(os.listdir(path_folder_checkpoint)):
+            num_checkpoint =  get_num_checkpoint(name_checkpoint)
+            if num_checkpoint >= 25:
+                path_checkpoint = path_folder_checkpoint + "/" + name_checkpoint
+                print("Load checkpoint: ", name_checkpoint)
+                segmentor.run(path_checkpoint)

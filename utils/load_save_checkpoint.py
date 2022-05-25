@@ -2,7 +2,7 @@ import torch
 import numpy as np 
 import os 
 import time 
-from config import config
+from config.config import config
 from collections import OrderedDict
 from utils.pyt_utils import load_model, load_model_cpu
 
@@ -121,6 +121,25 @@ def load_checkpoint_model(path_checkpoint, network):
     state_dict = torch.load(path_checkpoint, map_location="cpu")
 
     model = load_model_cpu(network, state_dict['model'], False)
+    del state_dict
+    print("Load checkpoint from file {}".format(path_checkpoint))
+    return model
+
+
+def load_only_checkpoint(path_checkpoint, network):
+    '''
+    params: path_checkpoint: path to load checkpoint
+    params: model: pytorch model (branch 1 branch 2)
+    params: optimizer_l: optimizer for left branch
+    params: optimizer_r: optimizer for right branch 
+    params: epoch: number of epoch to continue
+    
+    Restore checkpoint from pth file 
+    return: model, optimizer_l, optimizer_r
+    '''
+    state_dict = torch.load(path_checkpoint)
+
+    model = load_model(network, state_dict['model'], False)
     del state_dict
     print("Load checkpoint from file {}".format(path_checkpoint))
     return model

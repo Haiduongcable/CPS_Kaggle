@@ -13,8 +13,8 @@ import torch.nn.functional as F
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 
-from config_medical_image import config
-
+from config.config import config
+from dataloader.dataloader import get_train_loader
 # from model_efficientnet_backbone import Network
 from model.model import Network
 from dataloader.dataloader import VOC
@@ -26,20 +26,16 @@ from utils.load_save_checkpoint import load_checkpoint, save_checkpoint
 # from seg_opr.sync_bn import DataParallelModel
 from torch.nn import BatchNorm2d
 from tensorboardX import SummaryWriter
-from eval_function import SegEvaluator
-from dataloader.dataloader_medical_image import MedicalImageDataset, get_train_loader
-from torch.utils.data import DataLoader
-# from dataloader.dataloader import VOC
-# from dataloader.dataloader import ValPre
+from evaluation.eval_function import SegEvaluator
+from dataloader.dataloader import VOC
+from dataloader.dataloader import ValPre
+from utils.losses import semi_ce_loss_multi_class
 
-
-# import wandb
-
-# os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
-
-# wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
-
-# wandb.init(project = "Cross Pseudo Label Deeplabv3 + Update optimizers")
+if config.use_wandb:
+    import wandb
+    os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
+    wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
+    wandb.init(project = "Cross Pseudo Label Deeplabv3+ Ratio label 4 Update consitency Loss")
 
 
 cudnn.benchmark = True
@@ -50,34 +46,16 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed(seed)
 
 # data loader + unsupervised data loader
-labeled_dataset = MedicalImageDataset(supervised=True, validation=False)
-unlabeled_dataset = MedicalImageDataset(supervised=False, validation=False)
-
-train_loader = get_train_loader(labeled_dataset)
-unsupervised_train_loader = get_train_loader(unlabeled_dataset)
-
-
+train_loader, train_sampler = get_train_loader(VOC, train_source=config.train_source, unsupervised=False)
+unsupervised_train_loader, unsupervised_train_sampler = get_train_loader(VOC, train_source=config.unsup_source, unsupervised=True)
 
 # config network and criterion
-# criterion = nn.CrossEntropyLoss(reduction='mean')
+criterion = nn.CrossEntropyLoss(reduction='mean', ignore_index=255)
+criterion_csst = nn.MSELoss(reduction='mean')
 
-# def loss_cross_entropy(pred, target):
-#     pred = torch.squeeze(pred, 1)
-#     criterion = 
-#     return criterion
-# criterion_csst = nn.MSELoss(reduction='mean')
-criterion = nn.BCEWithLogitsLoss()
 
-def loss_cross_entropy(pred, target):
-    check_pred = pred.detach().cpu().numpy()
-    check_target = target.detach().cpu().numpy()
-    # print(np.unique(check_target))
-    target = torch.unsqueeze(target, 1)
-    return criterion(pred, target)
-    
 # define and init the model
-num_class = 1
-model = Network(num_class,
+model = Network(config.num_classes,
                 pretrained_model=config.pretrained_model,
                 norm_layer=BatchNorm2d)
 init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
@@ -99,7 +77,8 @@ optimizer_l = torch.optim.SGD(params_list_l,
                             lr=base_lr,
                             momentum=config.momentum,
                             weight_decay=config.weight_decay)
-
+# optimizer_l = torch.optim.AdamW(params_list_l,
+#                             lr=base_lr)
 
 params_list_r = []
 params_list_r = group_weight(params_list_r, model.branch2.backbone,
@@ -111,6 +90,9 @@ optimizer_r = torch.optim.SGD(params_list_r,
                             lr=base_lr,
                             momentum=config.momentum,
                             weight_decay=config.weight_decay)
+
+# optimizer_r = torch.optim.AdamW(params_list_r,
+#                             lr=base_lr)
 # config lr policy
 total_iteration = config.nepochs * config.niters_per_epoch
 lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niters_per_epoch * config.warm_up_epoch)
@@ -125,8 +107,8 @@ s_epoch = 0
 for epoch in range(s_epoch, config.nepochs):
     model.train()
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
-    number_iter_per_epoc = len(labeled_dataset) // config.batch_size
-    pbar = tqdm(range(number_iter_per_epoc), file=sys.stdout, bar_format=bar_format)
+
+    pbar = tqdm(range(config.niters_per_epoch))
 
 
     dataloader = iter(train_loader)
@@ -144,14 +126,13 @@ for epoch in range(s_epoch, config.nepochs):
 
         minibatch = dataloader.next()
         unsup_minibatch = unsupervised_dataloader.next()
-        imgs = minibatch['image']
+        imgs = minibatch['data']
         gts = minibatch['label']
-        unsup_imgs = unsup_minibatch['image']
-        imgs = imgs.cuda()
-        unsup_imgs = unsup_imgs.cuda()
-        
-        gts = gts.cuda()
-        
+        unsup_imgs = unsup_minibatch['data']
+        imgs = imgs.cuda(non_blocking=True)
+        unsup_imgs = unsup_imgs.cuda(non_blocking=True)
+        gts = gts.cuda(non_blocking=True)
+
         b, c, h, w = imgs.shape
         _, pred_sup_l = model(imgs, step=1)
         _, pred_unsup_l = model(unsup_imgs, step=1)
@@ -161,25 +142,29 @@ for epoch in range(s_epoch, config.nepochs):
         ### cps loss ###
         pred_l = torch.cat([pred_sup_l, pred_unsup_l], dim=0)
         pred_r = torch.cat([pred_sup_r, pred_unsup_r], dim=0)
-        # _, max_l = torch.max(pred_l, dim=1)
-        # _, max_r = torch.max(pred_r, dim=1)
-        # max_l = max_l.long()
-        # max_r = max_r.long()
-        max_r = torch.squeeze(pred_r, 1)
-        max_l = torch.squeeze(pred_l, 1)
-        cps_loss = loss_cross_entropy(pred_l, max_r) + loss_cross_entropy(pred_r, max_l)
+        _, max_l = torch.max(pred_l, dim=1)
+        _, max_r = torch.max(pred_r, dim=1)
+        max_l = max_l.long()
+        max_r = max_r.long()
+        loss_unsup, pass_rate, neg_loss = semi_ce_loss_multi_class(pred_l, pred_r)
+        
+        cps_loss = criterion(pred_l, max_r) + criterion(pred_r, max_l) + loss_unsup * 1.5
+        #print(loss_unsup.item(), cps_loss.item())
         # dist.all_reduce(cps_loss, dist.ReduceOp.SUM)
         cps_loss = cps_loss
         cps_loss = cps_loss * config.cps_weight
 
         ### standard cross entropy loss ###
-        # check_mask = pred_sup_l.sigmoid().detach().cpu().numpy()
-        # print(np.unique(check_mask))
-        loss_sup = loss_cross_entropy(pred_sup_l, gts)
+        loss_sup = criterion(pred_sup_l, gts)
+        # dist.all_reduce(loss_sup, dist.ReduceOp.SUM)
         loss_sup = loss_sup
-        loss_sup_r = loss_cross_entropy(pred_sup_r, gts)
+
+        loss_sup_r = criterion(pred_sup_r, gts)
+        # dist.all_reduce(loss_sup_r, dist.ReduceOp.SUM)
         loss_sup_r = loss_sup_r
-        print(loss_sup.item(), loss_sup_r.item(), cps_loss.item())
+
+        unlabeled_loss = False
+
         current_idx = epoch * config.niters_per_epoch + idx
         lr = lr_policy.get_lr(current_idx)
 
@@ -194,7 +179,7 @@ for epoch in range(s_epoch, config.nepochs):
             optimizer_r.param_groups[i]['lr'] = lr
 
         loss = loss_sup + loss_sup_r + cps_loss
-        # print(loss.item())
+        # print(loss_sup.item())
         loss.backward()
         optimizer_l.step()
         optimizer_r.step()
@@ -205,28 +190,29 @@ for epoch in range(s_epoch, config.nepochs):
 
         end_time = time.time()
 
-    # data_setting = {'img_root': config.img_root_folder,
-    #                 'gt_root': config.gt_root_folder,
-    #                 'train_source': config.train_source,
-    #                 'eval_source': config.eval_source}
+    data_setting = {'img_root': config.img_root_folder,
+                    'gt_root': config.gt_root_folder,
+                    'train_source': config.train_source,
+                    'eval_source': config.eval_source}
 
-    # val_pre = ValPre()
-    # dataset = VOC(data_setting, 'val', val_pre, training=False)
+    val_pre = ValPre()
+    dataset = VOC(data_setting, 'val', val_pre, training=False)
 
-    # with torch.no_grad():
-    #     segmentor = SegEvaluator(dataset, config.num_classes, config.image_mean,
-    #                              config.image_std, None,
-    #                              config.eval_scale_array, config.eval_flip,
-    #                              ["cuda"], False, None,
-    #                              False)
-    #     m_IOU_deeplabv3_1 = segmentor.run_model(model.branch2)
-    #     m_IOU_deeplabv3_2 = segmentor.run_model(model.branch1)
-    # print("mIOU deeplabv3 branch 1",m_IOU_deeplabv3_1)
-    # print("mIOU deeplabv3 branch 1", m_IOU_deeplabv3_2)
+    with torch.no_grad():
+        segmentor = SegEvaluator(dataset, config.num_classes, config.image_mean,
+                                 config.image_std, None,
+                                 config.eval_scale_array, config.eval_flip,
+                                 ["cuda"], False, None,
+                                 False)
+        m_IOU_deeplabv3_1 = segmentor.run_model(model.branch2)
+        m_IOU_deeplabv3_2 = segmentor.run_model(model.branch1)
+    print("mIOU deeplabv3 branch 1",m_IOU_deeplabv3_1)
+    print("mIOU deeplabv3 branch 1", m_IOU_deeplabv3_2)
 
-    # save_checkpoint(model, optimizer_l, optimizer_r, epoch)
-    # # wandb.log({"mIOU deeplabv3+ 1":  m_IOU_deeplabv3_1, "epoch": epoch})
-    # # wandb.log({"mIOU deeplabv3+ 2":  m_IOU_deeplabv3_2, "epoch": epoch})
-    # wandb.log({"Supervised Training Loss left":  sum_loss_sup / len(pbar),"epoch": epoch})
-    # wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})
-    # wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar),"epoch": epoch})
+    save_checkpoint(model, optimizer_l, optimizer_r, epoch)
+    if config.use_wandb:
+        wandb.log({"mIOU deeplabv3+ 1":  m_IOU_deeplabv3_1, "epoch": epoch})
+        wandb.log({"mIOU deeplabv3+ 2":  m_IOU_deeplabv3_2, "epoch": epoch})
+        wandb.log({"Supervised Training Loss left":  sum_loss_sup / len(pbar),"epoch": epoch})
+        wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})
+        wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar),"epoch": epoch})

@@ -12,30 +12,25 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
-from config import config
-from model.model import Network
-from dataloader.dataloader import VOC
+from config.config import config
+# from model.model import Network
+from model.model_deeplabv3_adv import Network
 from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
-
-from modules.seg_opr.loss_opr import SigmoidFocalLoss, ProbOhemCrossEntropy2d
-from utils.load_save_checkpoint import load_checkpoint, save_bestcheckpoint
-
+from utils.load_save_checkpoint import save_bestcheckpoint
+from itertools import chain
 from torch.nn import BatchNorm2d
-from tensorboardX import SummaryWriter
-from eval_function import SegEvaluator
 from dataloader.harnetmseg_loader import get_loader, test_dataset
 
-from utils.losses import structure_loss, semi_ce_loss
+from utils.losses import structure_loss
 
+if config.use_wandb:
+    import wandb
+    os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
 
-import wandb
+    wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
 
-os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
-
-wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
-
-wandb.init(project = "Medical Image Deeplabv3+")
+    wandb.init(project = "Medical Image Deeplabv3+ Update Conf Loss")
 
 
 
@@ -105,24 +100,31 @@ unsupervised_train_loader = get_loader(train_image_root, train_gts_root, batchsi
     
 # define and init the model
 num_class = 1
-model = Network(num_class,
-                pretrained_model=config.pretrained_model,
-                norm_layer=BatchNorm2d)
-init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
+model = Network(num_class,pretrained_model=config.pretrained_model, norm_layer=BatchNorm2d)
+init_weight(model.encoder_1.business_layer, nn.init.kaiming_normal_,
             BatchNorm2d, config.bn_eps, config.bn_momentum,
             mode='fan_in', nonlinearity='relu')
-init_weight(model.branch2.business_layer, nn.init.kaiming_normal_,
+init_weight(model.encoder_2.business_layer, nn.init.kaiming_normal_,
+            BatchNorm2d, config.bn_eps, config.bn_momentum,
+            mode='fan_in', nonlinearity='relu')
+
+init_weight(model.decoder_1.business_layer, nn.init.kaiming_normal_,
+            BatchNorm2d, config.bn_eps, config.bn_momentum,
+            mode='fan_in', nonlinearity='relu')
+init_weight(model.decoder_2.business_layer, nn.init.kaiming_normal_,
             BatchNorm2d, config.bn_eps, config.bn_momentum,
             mode='fan_in', nonlinearity='relu')
 # define the learning rate
 base_lr = config.lr
 # define the two optimizers
 params_list_l = []
-params_list_l = group_weight(params_list_l, model.branch1.backbone,
+params_list_l = group_weight(params_list_l, model.encoder_1.backbone,
                             BatchNorm2d, base_lr)
-for module in model.branch1.business_layer:
+
+for module in chain(model.encoder_1.business_layer, model.decoder_1.business_layer):
     params_list_l = group_weight(params_list_l, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
+    
 optimizer_l = torch.optim.SGD(params_list_l,
                             lr=base_lr,
                             momentum=config.momentum,
@@ -130,9 +132,9 @@ optimizer_l = torch.optim.SGD(params_list_l,
 
 
 params_list_r = []
-params_list_r = group_weight(params_list_r, model.branch2.backbone,
+params_list_r = group_weight(params_list_r, model.encoder_2.backbone,
                             BatchNorm2d, base_lr)
-for module in model.branch2.business_layer:
+for module in chain(model.encoder_2.business_layer, model.decoder_2.business_layer):
     params_list_r = group_weight(params_list_r, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
 optimizer_r = torch.optim.SGD(params_list_r,
@@ -179,10 +181,10 @@ for epoch in range(s_epoch, config.nepochs):
         unsup_imgs = unsup_imgs.cuda()
         
         b, c, h, w = imgs.shape
-        _, pred_sup_l = model(imgs, step=1)
-        _, pred_unsup_l = model(unsup_imgs, step=1)
-        _, pred_sup_r = model(imgs, step=2)
-        _, pred_unsup_r = model(unsup_imgs, step=2)
+        pred_sup_l = model(imgs, step=1)
+        pred_unsup_l = model(unsup_imgs, step=1)
+        pred_sup_r = model(imgs, step=2)
+        pred_unsup_r = model(unsup_imgs, step=2)
 
         ### cps loss ###
         pred_l = torch.cat([pred_sup_l, pred_unsup_l], dim=0)
@@ -193,7 +195,6 @@ for epoch in range(s_epoch, config.nepochs):
         # max_r = max_r.long()
         pseudo_gts_r = pred_r.sigmoid()
         pseudo_gts_l = pred_l.sigmoid()
-        loss_unsup, pass_rate, neg_loss = semi_ce_loss(pred_l, pseudo_gts_r)
         cps_loss = structure_loss(pred_l, pseudo_gts_r) + structure_loss(pred_r, pseudo_gts_l)
         # dist.all_reduce(cps_loss, dist.ReduceOp.SUM)
         
@@ -231,10 +232,12 @@ for epoch in range(s_epoch, config.nepochs):
         meandice = test(model,test_path)
         if meandice > best_dice:
             bestdice = meandice
+            print("best dice:", bestdice)
             #save checkpoint 
             save_bestcheckpoint(model, optimizer_l, optimizer_r)
         print("Dice score:   ", meandice)
-    wandb.log({"mDice deeplabv3+":  meandice, "epoch": epoch})
-    wandb.log({"Supervised Training Loss left":  sum_loss_sup_l / len(pbar),"epoch": epoch})
-    wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})
-    wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar),"epoch": epoch})
+    if config.use_wandb:
+        wandb.log({"mDice deeplabv3+":  meandice, "epoch": epoch})
+        wandb.log({"Supervised Training Loss left":  sum_loss_sup_l / len(pbar),"epoch": epoch})
+        wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})
+        wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar),"epoch": epoch})
