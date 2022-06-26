@@ -7,8 +7,8 @@ import numpy as np
 
 from functools import partial
 from collections import OrderedDict
-from config import config
-from modules.base_model import resnet50
+from config.config import config
+from modules.base_model import resnet50, resnet101
 from torchsummary import summary
 from modules.base_model.segformer import SegFormer_Customize
 
@@ -17,22 +17,23 @@ class Network(nn.Module):
     def __init__(self, num_classes, criterion, norm_layer, pretrained_model=None):
         super(Network, self).__init__()
         self.branch1 = SingleNetwork(num_classes, criterion, norm_layer, pretrained_model)
-        self.branch2 = SegFormer_Customize(num_label=21)
+        self.branch2 = SegFormer_Customize(num_label=num_classes)
 
     def forward(self, data, step=1):
-        if not self.training:
-            pred1 = self.branch1(data)
-            return pred1
-
+       
+        # if not self.training:
+        #     pred1 = self.branch1(data)
+        #     return pred1
         if step == 1:
             return self.branch1(data)
         elif step == 2:
+            
             return self.branch2(data)
 
 class SingleNetwork(nn.Module):
     def __init__(self, num_classes, criterion, norm_layer, pretrained_model=None):
         super(SingleNetwork, self).__init__()
-        self.backbone = resnet50(pretrained_model, norm_layer=norm_layer,
+        self.backbone = resnet101(pretrained_model, norm_layer=norm_layer,
                                   bn_eps=config.bn_eps,
                                   bn_momentum=config.bn_momentum,
                                   deep_stem=True, stem_width=64)

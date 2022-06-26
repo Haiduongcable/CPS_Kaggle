@@ -28,28 +28,35 @@ def load_model(model, model_file, is_restore=False):
 
     if isinstance(model_file, str):
         state_dict = torch.load(model_file)
+        
         if 'model' in state_dict.keys():
             state_dict = state_dict['model']
     else:
         state_dict = model_file
     t_ioend = time.time()
-
+    # print(state_dict.keys())
     if is_restore:
+        print('Load pretrained self supervised')
         new_state_dict = OrderedDict()
         for k, v in state_dict.items():
+            if 'backbone' in k:
+                name = k[9:]
             name = 'module.' + k
             new_state_dict[name] = v
-        state_dict = new_state_dict
+        state_dict = new_state_dict         
 
 
     model.load_state_dict(state_dict, strict=False)
     ckpt_keys = set(state_dict.keys())
     own_keys = set(model.state_dict().keys())
+    # print(own_keys)
+    #print("own keys",len(own_keys))
+    #print("checkpoint keys", len(ckpt_keys))
     missing_keys = own_keys - ckpt_keys
     unexpected_keys = ckpt_keys - own_keys
     
-    # print(missing_keys)
-    # print(unexpected_keys)
+    print("Missing key: ", len(missing_keys))
+    print("Unexpected key: ", len(unexpected_keys))
 
     del state_dict
     t_end = time.time()

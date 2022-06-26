@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 
-from config import config
+from config.config import config
 from dataloader.dataloader import get_train_loader
 # from model import Network
 # from model_efficientnet_backbone import Network
@@ -24,17 +24,26 @@ from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
 
 from modules.seg_opr.loss_opr import SigmoidFocalLoss, ProbOhemCrossEntropy2d
-from utils.load_save_checkpoint import load_checkpoint, save_checkpoint
+from utils.load_save_checkpoint import load_checkpoint, save_checkpoint, save_bestcheckpoint
 # from seg_opr.sync_bn import DataParallelModel
 '''
 Eval import
 '''
-from eval_function import SegEvaluator
+from evaluation.eval_function import SegEvaluator
 from dataloader.dataloader import VOC
 from dataloader.dataloader import ValPre
 
+if config.use_wandb:
+    import wandb
+
+    os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
+
+    wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
+
+    wandb.init(project = "Cross Pseudo Label Deeplabv3+ Resnet101 vs Segformer B2")
+
 from torch.nn import BatchNorm2d
-from tensorboardX import SummaryWriter
+
 
 cudnn.benchmark = True
 
@@ -51,10 +60,10 @@ unsupervised_train_loader, unsupervised_train_sampler = get_train_loader(VOC, tr
 criterion = nn.CrossEntropyLoss(reduction='mean', ignore_index=255)
 criterion_csst = nn.MSELoss(reduction='mean')
 
-
+path_resnet101 = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pytorch-weight/resnet101_v1c.pth"
 # define and init the model
 model = Network(config.num_classes, criterion=criterion,
-                pretrained_model=config.pretrained_model,
+                pretrained_model=path_resnet101,
                 norm_layer=BatchNorm2d)
 init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
             BatchNorm2d, config.bn_eps, config.bn_momentum,
@@ -83,7 +92,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 print('begin train')
 s_epoch = 0
-
+path_save = "weights/best_segformer_deeplab.pth"
 for epoch in range(s_epoch, config.nepochs):
     model.train()
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
@@ -196,4 +205,10 @@ for epoch in range(s_epoch, config.nepochs):
         m_IOU_deeplabv3 = segmentor.run_model(model.branch1)
     print("mIOU deeplabv3",m_IOU_deeplabv3)
     print("mIOU segformer", m_IOU_segformer)
-    save_checkpoint(model, optimizer_l, optimizer_r, epoch)
+    save_bestcheckpoint(model, optimizer_l, optimizer_r, path_save)
+    if config.use_wandb:
+        wandb.log({"mIOU deeplabv3+ 1":  m_IOU_deeplabv3, "epoch": epoch})
+        wandb.log({"mIOU deeplabv3+ 2":  m_IOU_segformer, "epoch": epoch})
+        wandb.log({"Supervised Training Loss left":  sum_loss_sup / len(pbar),"epoch": epoch})
+        wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})
+        wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar),"epoch": epoch})

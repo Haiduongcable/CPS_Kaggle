@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from turtle import forward
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,32 +8,22 @@ import numpy as np
 
 from functools import partial
 from collections import OrderedDict
-from config import config
-from modules.base_model import resnet50
+from config.config import config
+from modules.base_model import resnet50, resnet101
 from torchsummary import summary
-from modules.base_model.segformer import SegFormer_Customize
 
 
-class Network(nn.Module):
-    def __init__(self, num_classes):
-        super(Network, self).__init__()
-        self.branch1 = SegFormer_Customize(num_label=num_classes)
-        self.branch2 = SegFormer_Customize(num_label=num_classes)
-
-    def forward(self, data, step=1):
-        if not self.training:
-            pred1 = self.branch1(data)
-            return pred1
-
-        if step == 1:
-            return self.branch1(data)
-        elif step == 2:
-            return self.branch2(data)
-
-class SingleNetwork(nn.Module):
-    def __init__(self, num_classes, norm_layer, pretrained_model=None):
-        super(SingleNetwork, self).__init__()
-        self.backbone = resnet50(pretrained_model, norm_layer=norm_layer,
+class Deeplabv3plus_representation(nn.Module):
+    def __init__(self, num_classes, norm_layer, pretrained_model=None, type_backbone = 'resnet101'):
+        super(Deeplabv3plus_representation, self).__init__()
+        #Build encoder backbone
+        if type_backbone == 'resnet50':
+            self.backbone = resnet50(pretrained_model, norm_layer=norm_layer,
+                                  bn_eps=config.bn_eps,
+                                  bn_momentum=config.bn_momentum,
+                                  deep_stem=True, stem_width=64)
+        else:
+            self.backbone = resnet101(pretrained_model, norm_layer=norm_layer,
                                   bn_eps=config.bn_eps,
                                   bn_momentum=config.bn_momentum,
                                   deep_stem=True, stem_width=64)
@@ -40,25 +31,19 @@ class SingleNetwork(nn.Module):
         for m in self.backbone.layer4.children():
             m.apply(partial(self._nostride_dilate, dilate=self.dilate))
             self.dilate *= 2
-
-        self.head = Head(num_classes, norm_layer, config.bn_momentum)
+        #Build decoder 
         self.business_layer = []
-        self.business_layer.append(self.head)
-
-        self.classifier = nn.Conv2d(256, num_classes, kernel_size=1, bias=True)
-        self.business_layer.append(self.classifier)
-
+        self.decoder = DecoderDeeplabv3plus(num_classes, norm_layer, config.bn_momentum)
+        self.business_layer.append(self.decoder.head)
+        self.business_layer.append(self.decoder.classifier)
+        
+    
     def forward(self, data):
-        blocks = self.backbone(data)
-        v3plus_feature = self.head(blocks)      # (b, c, h, w)
-        b, c, h, w = v3plus_feature.shape
-
-        pred = self.classifier(v3plus_feature)
         b, c, h, w = data.shape
-        pred = F.interpolate(pred, size=(h, w), mode='bilinear', align_corners=True)
+        block = self.backbone(data)
+        pred = self.decoder(block, data_shape = (h,w))
         return pred
-
-    # @staticmethod
+    
     def _nostride_dilate(self, m, dilate):
         if isinstance(m, nn.Conv2d):
             if m.stride == (2, 2):
@@ -71,8 +56,9 @@ class SingleNetwork(nn.Module):
                 if m.kernel_size == (3, 3):
                     m.dilation = (dilate, dilate)
                     m.padding = (dilate, dilate)
-
-
+        
+        
+    
 class ASPP(nn.Module):
     def __init__(self,
                  in_channels,
@@ -126,23 +112,13 @@ class ASPP(nn.Module):
         out = self.red_bn(out)
         out = self.leak_relu(out)  # add activation layer
         return out
-
+    
     def _global_pooling(self, x):
         if self.training or self.pooling_size is None:
             pool = x.view(x.size(0), x.size(1), -1).mean(dim=-1)
             pool = pool.view(x.size(0), x.size(1), 1, 1)
         else:
-            pooling_size = (min(try_index(self.pooling_size, 0), x.shape[2]),
-                            min(try_index(self.pooling_size, 1), x.shape[3]))
-            padding = (
-                (pooling_size[1] - 1) // 2,
-                (pooling_size[1] - 1) // 2 if pooling_size[1] % 2 == 1 else (pooling_size[1] - 1) // 2 + 1,
-                (pooling_size[0] - 1) // 2,
-                (pooling_size[0] - 1) // 2 if pooling_size[0] % 2 == 1 else (pooling_size[0] - 1) // 2 + 1
-            )
-
-            pool = nn.functional.avg_pool2d(x, pooling_size, stride=1)
-            pool = nn.functional.pad(pool, pad=padding, mode="replicate")
+            raise NotImplementedError
         return pool
 
 class Head(nn.Module):
@@ -174,17 +150,42 @@ class Head(nn.Module):
         low_level_features = self.reduce(low_level_features)
 
         f = F.interpolate(f, size=(low_h, low_w), mode='bilinear', align_corners=True)
-        f = torch.cat((f, low_level_features), dim=1)
-        f = self.last_conv(f)
+        feature_concat = torch.cat((f, low_level_features), dim=1)
+        f = self.last_conv(feature_concat)
 
-        return f
-
+        return f, feature_concat
+        
+class DecoderDeeplabv3plus(nn.Module):
+    def __init__(self, num_classes, norm_layer, bn_momentum, conv_in_ch=256):
+        super(DecoderDeeplabv3plus, self).__init__()
+        self.head = Head(num_classes, norm_layer, bn_momentum)
+        self.classifier = nn.Conv2d(256, num_classes, kernel_size=1, bias=True)
+        self.representation = nn.Sequential(
+                nn.Conv2d(304, 256, kernel_size=3, stride=1, padding=1, bias=False),
+                nn.BatchNorm2d(256, momentum=bn_momentum),
+                nn.ReLU(),
+                nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
+                nn.BatchNorm2d(256, momentum=bn_momentum),
+                nn.ReLU(),
+                nn.Dropout2d(0.1),
+                nn.Conv2d(256, 256, kernel_size=1, stride=1, padding=0, bias=True),
+        )
+        
+    def forward(self, blocks, data_shape):
+        h, w = data_shape[0], data_shape[1]
+        f, feature_concat = self.head(blocks)
+        representation_feature = self.representation(feature_concat)
+        pred = self.classifier(f)
+        pred = F.interpolate(pred, size=(h, w), mode='bilinear', align_corners=True)
+        return pred, representation_feature
+        
+        
 
 if __name__ == '__main__':
     device = torch.device("cuda")
-    model = Network(40, criterion=nn.CrossEntropyLoss(),
+    model = Deeplabv3plus_representation(40, criterion=nn.CrossEntropyLoss(),
                     pretrained_model=None,
-                    norm_layer=nn.BatchNorm2d)
+                    norm_layer=nn.BatchNorm2d, type_backbone='resnet101')
    
     # model.to(device)
     model.eval()
@@ -195,9 +196,5 @@ if __name__ == '__main__':
 
     # print(model.branch1)
 
-    out_2 = model(left, step = 1)
-    print(out_2.shape)
-
-    out_1 = model(left, step = 2)
-    print(out_1.shape)
-
+    out = model(left)
+    print(out.shape)

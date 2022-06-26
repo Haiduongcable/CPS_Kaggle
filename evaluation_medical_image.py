@@ -13,8 +13,10 @@ import torch.nn.functional as F
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 from config.config import config
-#from model.model import Network
-from model.model_deeplabv3_adv import Network
+from model.model import Network
+# from model.model_deeplabv3_adv import Network
+# from model.model_segformer_2_branch import Network
+from model.model_segformer_deeplabv3 import Network
 from dataloader.dataloader import VOC
 from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
@@ -24,7 +26,6 @@ from utils.load_save_checkpoint import load_only_checkpoint, save_bestcheckpoint
 
 import cv2
 from torch.nn import BatchNorm2d
-
 from tensorboardX import SummaryWriter
 from evaluation.eval_function import SegEvaluator
 from dataloader.harnetmseg_loader import get_loader, test_dataset
@@ -47,11 +48,11 @@ def test(model, path, device, path_save_dataset):
         gt /= (gt.max() + 1e-8)
         image = image.to(device)
         
-        res  = model(image, step=2)
+        res  = model(image, step=1)
         res = F.upsample(res, size=gt.shape, mode='bilinear', align_corners=False)
         res = res.sigmoid().data.cpu().numpy().squeeze()
         res = (res - res.min()) / (res.max() - res.min() + 1e-8)
-        input = res
+        
         image_res = res
         log_res = np.array(image_res) * 255
         image_res = np.zeros((log_res.shape[0], log_res.shape[1], 3))
@@ -59,6 +60,23 @@ def test(model, path, device, path_save_dataset):
         image_res[:,:,1] = log_res
         image_res[:,:,2] = log_res
         image_res = np.uint8(image_res)
+        
+        
+        res2  = model(image, step=2)
+        
+        res2 = F.upsample(res2, size=gt.shape, mode='bilinear', align_corners=False)
+        res2 = res2.sigmoid().data.cpu().numpy().squeeze()
+        res2 = (res2 - res2.min()) / (res2.max() - res2.min() + 1e-8)
+        image_res2 = res2
+        input = res2
+        log_res2 = np.array(image_res2) * 255
+        image_res2 = np.zeros((log_res2.shape[0], log_res2.shape[1], 3))
+        image_res2[:,:,0] = log_res2
+        image_res2[:,:,1] = log_res2
+        image_res2[:,:,2] = log_res2
+        image_res2 = np.uint8(image_res2)
+        
+        
         image_log = cv2.imread(image_root + name)
         
         
@@ -80,7 +98,8 @@ def test(model, path, device, path_save_dataset):
         image_vs_gt = cv2.putText(image_vs_gt, 'Groundtruth', (0, 50), font, 
                         fontScale, color, thickness, cv2.LINE_AA)
         
-        im_vsall = cv2.hconcat([image_log,stack_image, image_res,stack_image, image_vs_gt])
+        im_vsall = cv2.hconcat([image_log,stack_image, image_res,stack_image,image_res2,stack_image, image_vs_gt])
+        
         
         N = gt.shape
         smooth = 1
@@ -96,7 +115,7 @@ def test(model, path, device, path_save_dataset):
         mIOU += IOU
         im_vsall = cv2.putText(im_vsall, "Dice: " + str(round(loss,2)), (0, 50), font, 
                         fontScale, color, thickness, cv2.LINE_AA)
-        # if IOU < 0.7:
+        # if IOU < 0.3:
         cv2.imwrite(path_save_dataset+"/" + name, im_vsall)
         a = float(a)
         b = b + a
@@ -110,15 +129,23 @@ def test(model, path, device, path_save_dataset):
 num_class = 1
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cuda")
-network = Network(num_class,
-                pretrained_model=config.pretrained_model,
+num_class = 1
+# network = Network(num_class)
+# network = Network(num_class,pretrained_model=config.pretrained_model, norm_layer=BatchNorm2d)
+
+path_resnet101 = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pytorch-weight/resnet101_v1c.pth"
+# define and init the model
+num_classes = 1
+network = Network(num_classes, criterion=None,
+                pretrained_model=path_resnet101,
                 norm_layer=BatchNorm2d)
 network.to(device)
+# 
 
 
 s_epoch = 0
 lambda_cross_entropy = 1
-model = load_only_checkpoint("medical_weight/bestcheckpoint.pth", network)
+model = load_only_checkpoint("medical_weight/best_deeplabresnet101_segformer.pth", network)
 model.eval()
 
 dir_test = "../Dataset/TestDataset"
@@ -130,4 +157,4 @@ for dataset in os.listdir(dir_test):
         os.mkdir(path_save_dataset)
     meanDice, meanIOU = test(model, path_test, device, path_save_dataset)
     print("Mean Dice of {} dataset: {}".format(dataset,meanDice))
-    print("Mean Dice of {} dataset: {}".format(dataset,meanIOU))
+    print("Mean IOU of {} dataset: {}".format(dataset,meanIOU))

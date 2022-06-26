@@ -127,24 +127,15 @@ class ASPP(nn.Module):
         out = self.red_bn(out)
         out = self.leak_relu(out)  # add activation layer
         return out
-
+    
     def _global_pooling(self, x):
         if self.training or self.pooling_size is None:
             pool = x.view(x.size(0), x.size(1), -1).mean(dim=-1)
             pool = pool.view(x.size(0), x.size(1), 1, 1)
         else:
-            pooling_size = (min(try_index(self.pooling_size, 0), x.shape[2]),
-                            min(try_index(self.pooling_size, 1), x.shape[3]))
-            padding = (
-                (pooling_size[1] - 1) // 2,
-                (pooling_size[1] - 1) // 2 if pooling_size[1] % 2 == 1 else (pooling_size[1] - 1) // 2 + 1,
-                (pooling_size[0] - 1) // 2,
-                (pooling_size[0] - 1) // 2 if pooling_size[0] % 2 == 1 else (pooling_size[0] - 1) // 2 + 1
-            )
-
-            pool = nn.functional.avg_pool2d(x, pooling_size, stride=1)
-            pool = nn.functional.pad(pool, pad=padding, mode="replicate")
+            raise NotImplementedError
         return pool
+
 
 class Head(nn.Module):
     def __init__(self, classify_classes, norm_act=nn.BatchNorm2d, bn_momentum=0.0003):
@@ -184,7 +175,7 @@ class Head(nn.Module):
 if __name__ == '__main__':
     device = torch.device("cuda")
     model = Network(40, criterion=nn.CrossEntropyLoss(),
-                    pretrained_model=None,
+                    pretrained_model="self_supervised_weight/epoch_76.pth",
                     norm_layer=nn.BatchNorm2d)
    
     # model.to(device)

@@ -3,3 +3,8 @@ Log/
 wandb/
 medical_weight/
 Visualize/
+Visualize_deeplab/
+Visualize_selfsupervised/
+self_supervised_weight/
+pretrained/
+utils/__pycache__/

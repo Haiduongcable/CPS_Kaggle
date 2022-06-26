@@ -133,7 +133,7 @@ class VATDecoderNetwork(nn.Module):
 
     def forward(self, f, data_shape, t_model=None):
         if t_model is not None:
-            r_adv = get_r_adv_t(f, t_model,data_shape, it=1, xi=1e-6, eps=2.0)
+            r_adv = get_r_adv_t(f, t_model,data_shape, it=1, xi=1e-6, eps=0.2)
             f += r_adv
 
         pred = self.upsample(f, data_shape)

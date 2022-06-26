@@ -13,28 +13,32 @@ import torch.nn.functional as F
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 from config.config import config
-# from model.model import Network
-from model.model_deeplabv3_adv import Network
+from model.model import Network
+from dataloader.dataloader import VOC
 from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
-from utils.load_save_checkpoint import save_bestcheckpoint
-from itertools import chain
+
+from modules.seg_opr.loss_opr import SigmoidFocalLoss, ProbOhemCrossEntropy2d
+from utils.load_save_checkpoint import load_checkpoint, save_bestcheckpoint
+
 from torch.nn import BatchNorm2d
+from tensorboardX import SummaryWriter
 from dataloader.harnetmseg_loader import get_loader, test_dataset
 
 from utils.losses import structure_loss
 
-if config.use_wandb:
+if config["use_wandb"]:
     import wandb
+
     os.environ["WANDB_API_KEY"] = "88d5e168a5043d5ca6a1d3e4050ec957a3e702d4"
 
     wandb.login(key="88d5e168a5043d5ca6a1d3e4050ec957a3e702d4")
 
-    wandb.init(project = "Medical Image Deeplabv3+ Virtual Adverserial Training Epsilon 0.1")
+    wandb.init(project = "Medical Image Deeplabv3+")
 
 
 
-cudnn.benchmark = True
+    cudnn.benchmark = True
 
 seed = config.seed
 torch.manual_seed(seed)
@@ -90,6 +94,7 @@ train_path = "../Dataset/TrainDataset"
 test_path = "../Dataset/TestDataset/Kvasir"
 train_image_root = train_path +  "/image"
 train_gts_root = train_path + "/mask"
+# path_pretrain_self_supervised = ".pth"
 train_loader = get_loader(train_image_root, train_gts_root, batchsize=8,\
                         trainsize=352, augmentation = True, supervised = True)    
 
@@ -100,41 +105,35 @@ unsupervised_train_loader = get_loader(train_image_root, train_gts_root, batchsi
     
 # define and init the model
 num_class = 1
-model = Network(num_class,pretrained_model=config.pretrained_model, norm_layer=BatchNorm2d)
-init_weight(model.encoder_1.business_layer, nn.init.kaiming_normal_,
+model = Network(num_class,
+                pretrained_model=config.pretrained_model,
+                norm_layer=BatchNorm2d)
+init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
             BatchNorm2d, config.bn_eps, config.bn_momentum,
             mode='fan_in', nonlinearity='relu')
-init_weight(model.encoder_2.business_layer, nn.init.kaiming_normal_,
-            BatchNorm2d, config.bn_eps, config.bn_momentum,
-            mode='fan_in', nonlinearity='relu')
-
-init_weight(model.decoder_1.business_layer, nn.init.kaiming_normal_,
-            BatchNorm2d, config.bn_eps, config.bn_momentum,
-            mode='fan_in', nonlinearity='relu')
-init_weight(model.decoder_2.business_layer, nn.init.kaiming_normal_,
+init_weight(model.branch2.business_layer, nn.init.kaiming_normal_,
             BatchNorm2d, config.bn_eps, config.bn_momentum,
             mode='fan_in', nonlinearity='relu')
 # define the learning rate
-base_lr = config.lr
+base_lr = 0.025
 # define the two optimizers
 params_list_l = []
-params_list_l = group_weight(params_list_l, model.encoder_1.backbone,
+params_list_l = group_weight(params_list_l, model.branch1.backbone,
                             BatchNorm2d, base_lr)
-
-for module in chain(model.encoder_1.business_layer, model.decoder_1.business_layer):
+for module in model.branch1.business_layer:
     params_list_l = group_weight(params_list_l, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
-    
 optimizer_l = torch.optim.SGD(params_list_l,
                             lr=base_lr,
                             momentum=config.momentum,
                             weight_decay=config.weight_decay)
 
-
+NUM_EPOCH = 128
+NUM_ITER_PER_EPOCH = len(train_loader)
 params_list_r = []
-params_list_r = group_weight(params_list_r, model.encoder_2.backbone,
+params_list_r = group_weight(params_list_r, model.branch2.backbone,
                             BatchNorm2d, base_lr)
-for module in chain(model.encoder_2.business_layer, model.decoder_2.business_layer):
+for module in model.branch2.business_layer:
     params_list_r = group_weight(params_list_r, module, BatchNorm2d,
                                 base_lr)        # head lr * 10
 optimizer_r = torch.optim.SGD(params_list_r,
@@ -142,17 +141,18 @@ optimizer_r = torch.optim.SGD(params_list_r,
                             momentum=config.momentum,
                             weight_decay=config.weight_decay)
 # config lr policy
-total_iteration = config.nepochs * config.niters_per_epoch
-lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niters_per_epoch * config.warm_up_epoch)
+total_iteration = NUM_EPOCH * NUM_ITER_PER_EPOCH
+lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, NUM_ITER_PER_EPOCH * 2)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 print('begin train')
 
 s_epoch = 0
-path_save = "medical_weight/best_adv_deeplab_model_epsilon_01.pth"
+
 best_dice = -1
-for epoch in range(s_epoch, config.nepochs):
+path_save = "medical_weight/best_deeplab.pth"
+for epoch in range(s_epoch, NUM_EPOCH):
     model.train()
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
     number_iter_per_epoch = len(train_loader)
@@ -181,10 +181,10 @@ for epoch in range(s_epoch, config.nepochs):
         unsup_imgs = unsup_imgs.cuda()
         
         b, c, h, w = imgs.shape
-        pred_sup_l = model(imgs, step=1)
-        pred_unsup_l = model(unsup_imgs, step=1)
-        pred_sup_r = model(imgs, step=2)
-        pred_unsup_r = model(unsup_imgs, step=2)
+        _, pred_sup_l = model(imgs, step=1)
+        _, pred_unsup_l = model(unsup_imgs, step=1)
+        _, pred_sup_r = model(imgs, step=2)
+        _, pred_unsup_r = model(unsup_imgs, step=2)
 
         ### cps loss ###
         pred_l = torch.cat([pred_sup_l, pred_unsup_l], dim=0)
@@ -193,15 +193,17 @@ for epoch in range(s_epoch, config.nepochs):
         # _, max_r = torch.max(pred_r, dim=1)
         # max_l = max_l.long()
         # max_r = max_r.long()
-        pseudo_gts_r = pred_r.sigmoid()
-        pseudo_gts_l = pred_l.sigmoid()
+        with torch.no_grad():
+            pseudo_gts_r = pred_r.sigmoid()
+            pseudo_gts_l = pred_l.sigmoid()
+        # loss_unsup, pass_rate, neg_loss = semi_ce_loss(pred_l, pseudo_gts_r)
         cps_loss = structure_loss(pred_l, pseudo_gts_r) + structure_loss(pred_r, pseudo_gts_l)
         # dist.all_reduce(cps_loss, dist.ReduceOp.SUM)
         
 
         loss_sup_l = structure_loss(pred_sup_l, gts)
         loss_sup_r = structure_loss(pred_sup_r, gts)
-        current_idx = epoch * config.niters_per_epoch + idx
+        current_idx = epoch * NUM_ITER_PER_EPOCH + idx
         lr = lr_policy.get_lr(current_idx)
 
         # reset the learning rate
@@ -232,11 +234,11 @@ for epoch in range(s_epoch, config.nepochs):
         meandice = test(model,test_path)
         if meandice > best_dice:
             bestdice = meandice
-            print("best dice:", bestdice)
             #save checkpoint 
             save_bestcheckpoint(model, optimizer_l, optimizer_r, path_save)
         print("Dice score:   ", meandice)
-    if config.use_wandb:
+    
+    if config["use_wandb"]:
         wandb.log({"mDice deeplabv3+":  meandice, "epoch": epoch})
         wandb.log({"Supervised Training Loss left":  sum_loss_sup_l / len(pbar),"epoch": epoch})
         wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})

@@ -125,7 +125,7 @@ C.weight_decay = 1e-4
 
 
 #C.nepochs = 50
-C.nepochs = 50
+C.nepochs = 64
 
 #Test code
 C.max_samples = max(C.num_train_imgs, C.num_unsup_imgs)    

@@ -12,19 +12,23 @@ class PolypDataset(data.Dataset):
     """
     dataloader for polyp segmentation tasks
     """
-    def __init__(self, image_root, gt_root, trainsize, augmentations, supervised = True):
+    def __init__(self, image_root, gt_root, trainsize,\
+                augmentations, supervised = True, use_offline_aug = False):
+        self.use_offline_aug = use_offline_aug
         self.trainsize = trainsize
         self.augmentations = augmentations
+        print('Used augmentation offline: ', self.use_offline_aug)
         print(self.augmentations)
         self.image_root = image_root
         self.gt_root = gt_root
         self.images = [image_root + f for f in os.listdir(image_root) if f.endswith('.jpg') or f.endswith('.png')]
         self.gts = [gt_root + f for f in os.listdir(gt_root) if f.endswith('.png')]
         self.n_image = sorted(os.listdir(self.image_root))
-        seed = 10 
-        random.seed(10)
+        seed = 10
+        random.seed(seed)
         random.shuffle(self.n_image)
         self.images = sorted(self.images)
+        
         self.gts = sorted(self.gts)
         self.ratio_labeled = 0.2 # 0.2 vs 0.8
         self.length_dataset = len(self.n_image)
@@ -105,14 +109,28 @@ class PolypDataset(data.Dataset):
         images = []
         gts = []
         l_nimage_labeled = self.n_image[:self.length_labeled_dataset]
-        # l_n_labimage = [self.path_dataset + "/image/" +\
-        #                             item for item in l_nimage_labeled]
+        # if self.use_offline_aug:
+        #     #CONFIG 
+        #     PATH_OFFLINE_AUG_image = "../Dataset/Augmentation/Mosaic_augmentation/image"
+        #     PATH_OFFLINE_AUG_mask = "../Dataset/Augmentation/Mosaic_augmentation/mask"
+        #     l_offline_aug_image = []
+        #     l_offline_aug_mask = []
+        #     for nimage in os.listdir(PATH_OFFLINE_AUG_image):
+        #         path_aug_image = PATH_OFFLINE_AUG_image + "/" + nimage
+        #         path_aug_mask = PATH_OFFLINE_AUG_mask + "/" + nimage
+        #         l_offline_aug_image.append(path_aug_image)
+        #         l_offline_aug_mask.append(path_aug_mask)
+        #     print("Add offline Augmentation data: ", len(l_offline_aug_image), len(l_offline_aug_mask))
         for nameimage in l_nimage_labeled:
             path_images = self.image_root +"/"+ nameimage
             path_gts = self.gt_root +"/"+ nameimage
             images.append(path_images)
             gts.append(path_gts)
+        # if self.use_offline_aug:
+        #     images += l_offline_aug_image
+        #     gts += l_offline_aug_mask
         images, gts = expand_dataloader(images,gts, self.length_unlabeled_dataset)
+        
         return images, gts
     
     def filter_unlabeled_dataset(self):
@@ -193,13 +211,13 @@ class test_dataset:
         return image, gt, name
     
     
-    def gamma_correction(self, image_pillow, gamma = 0.65):
-        image_rgb = np.array()
-        invGamma = 1.0 / gamma
-        table = np.array([((i / 255.0) ** invGamma) * 255
-            for i in np.arange(0, 256)]).astype("uint8")
-        # apply gamma correction using the lookup table
-        return cv2.LUT(image, table)
+    # def gamma_correction(self, image_pillow, gamma = 0.65):
+    #     image_rgb = np.array()
+    #     invGamma = 1.0 / gamma
+    #     table = np.array([((i / 255.0) ** invGamma) * 255
+    #         for i in np.arange(0, 256)]).astype("uint8")
+    #     # apply gamma correction using the lookup table
+    #     return cv2.LUT(image, table)
 
     def rgb_loader(self, path):
         with open(path, 'rb') as f:
@@ -217,5 +235,5 @@ if __name__ == '__main__':
     gt_root = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/CrossPseudo_UpdateBranch/Dataset/TrainDataset/mask"
     train_loader = get_loader(image_root, gt_root, batchsize=16, trainsize=352, augmentation = True, supervised = True)
     unsupervised_train_loader = get_loader(image_root, gt_root, batchsize=16, trainsize=352, augmentation = True, supervised = False)
-    
+    # print(train_loader)
         

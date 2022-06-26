@@ -1,2 +1,2 @@
-python train_raw.py
-python train_segformer_2branch.py
+python train_medical_image_use_self_supervised.py
+python train_medical_image_freeze_self_supervised.py

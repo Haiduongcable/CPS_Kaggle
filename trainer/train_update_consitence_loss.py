@@ -144,13 +144,14 @@ for epoch in range(s_epoch, config.nepochs):
         pred_r = torch.cat([pred_sup_r, pred_unsup_r], dim=0)
         _, max_l = torch.max(pred_l, dim=1)
         _, max_r = torch.max(pred_r, dim=1)
-        max_l = max_l.long()
-        max_r = max_r.long()
-        loss_unsup, pass_rate, neg_loss = semi_ce_loss_multi_class(pred_l, pred_r)
+        # max_l = max_l.long()
+        # max_r = max_r.long()
+        loss_consistence_left , _, _ = semi_ce_loss_multi_class(pred_l, pred_r)
+        loss_consistence_right , _, _ = semi_ce_loss_multi_class(pred_r, pred_l)
         
-        cps_loss = criterion(pred_l, max_r) + criterion(pred_r, max_l) + loss_unsup * 1.5
+        cps_loss = loss_consistence_left + loss_consistence_right
         #print(loss_unsup.item(), cps_loss.item())
-        # dist.all_reduce(cps_loss, dist.ReduceOp.SUM)
+        # dist.all_reduce(cps_loss, dist.ReduceOp.SUM)s
         cps_loss = cps_loss
         cps_loss = cps_loss * config.cps_weight
 

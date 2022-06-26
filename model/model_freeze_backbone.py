@@ -7,17 +7,15 @@ import numpy as np
 
 from functools import partial
 from collections import OrderedDict
-from config import config
+from config.config import config
 from modules.base_model import resnet50
 from torchsummary import summary
-from modules.base_model.segformer import SegFormer_Customize
-
 
 class Network(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, norm_layer, pretrained_model=None):
         super(Network, self).__init__()
-        self.branch1 = SegFormer_Customize(num_label=num_classes)
-        self.branch2 = SegFormer_Customize(num_label=num_classes)
+        self.branch1 = SingleNetwork(num_classes, norm_layer, pretrained_model)
+        self.branch2 = SingleNetwork(num_classes, norm_layer, pretrained_model)
 
     def forward(self, data, step=1):
         if not self.training:
@@ -49,13 +47,17 @@ class SingleNetwork(nn.Module):
         self.business_layer.append(self.classifier)
 
     def forward(self, data):
-        blocks = self.backbone(data)
+        with torch.no_grad():
+            blocks = self.backbone(data)
         v3plus_feature = self.head(blocks)      # (b, c, h, w)
         b, c, h, w = v3plus_feature.shape
 
         pred = self.classifier(v3plus_feature)
         b, c, h, w = data.shape
         pred = F.interpolate(pred, size=(h, w), mode='bilinear', align_corners=True)
+
+        if self.training:
+            return v3plus_feature, pred
         return pred
 
     # @staticmethod
@@ -183,7 +185,7 @@ class Head(nn.Module):
 if __name__ == '__main__':
     device = torch.device("cuda")
     model = Network(40, criterion=nn.CrossEntropyLoss(),
-                    pretrained_model=None,
+                    pretrained_model="self_supervised_weight/epoch_76.pth",
                     norm_layer=nn.BatchNorm2d)
    
     # model.to(device)
@@ -195,9 +197,5 @@ if __name__ == '__main__':
 
     # print(model.branch1)
 
-    out_2 = model(left, step = 1)
-    print(out_2.shape)
-
-    out_1 = model(left, step = 2)
-    print(out_1.shape)
-
+    out = model(left)
+    print(out.shape)

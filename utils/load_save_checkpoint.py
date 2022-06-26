@@ -46,7 +46,7 @@ def save_checkpoint(model, optimizer_l, optimizer_r, epoch ):
     del new_state_dict
     print("Saved checkpoint")
     
-def save_bestcheckpoint(model, optimizer_l, optimizer_r ):
+def save_bestcheckpoint(model, optimizer_l, optimizer_r, path_save):
     '''
     params: model: pytorch model (branch 1 branch 2)
     params: optimizer_l: optimizer for left branch
@@ -55,8 +55,6 @@ def save_bestcheckpoint(model, optimizer_l, optimizer_r ):
     
     (Create directory) and save state dict checkpoint
     '''
-    path_dir = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/CrossPseudo_UpdateBranch/CPS_Kaggle/medical_weight"
-    path_save = path_dir + "/" + "bestcheckpoint.pth"
     
     print("Saving checkpoint to file {}".format(path_save))
     
@@ -78,6 +76,21 @@ def save_bestcheckpoint(model, optimizer_l, optimizer_r ):
     if optimizer_r is not None:
         state_dict['optimizer_r'] = optimizer_r.state_dict()
 
+    torch.save(state_dict, path_save)
+    del state_dict
+    del new_state_dict
+    print("Saved checkpoint")
+    
+    
+def save_only_checkpoint(path_save, model):
+    state_dict = {}
+    new_state_dict = OrderedDict()
+    for k, v in model.state_dict().items():
+        key = k
+        if k.split('.')[0] == 'module':
+            key = k[7:]
+        new_state_dict[key] = v
+    state_dict['model'] = new_state_dict
     torch.save(state_dict, path_save)
     del state_dict
     del new_state_dict
@@ -138,6 +151,7 @@ def load_only_checkpoint(path_checkpoint, network):
     return: model, optimizer_l, optimizer_r
     '''
     state_dict = torch.load(path_checkpoint)
+    print(state_dict['model'].keys())
 
     model = load_model(network, state_dict['model'], False)
     del state_dict
