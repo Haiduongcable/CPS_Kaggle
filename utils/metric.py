@@ -27,6 +27,17 @@ def compute_score(hist, correct, labeled):
 
     return iu, mean_IU, mean_IU_no_back, mean_pixel_acc
 
+def compute_score_dice_IOU(hist, correct, labeled):
+    iu = np.diag(hist) / (hist.sum(1) + hist.sum(0) - np.diag(hist))
+    dicescore = 2* np.diag(hist) / (hist.sum(1) + hist.sum(0))
+    mean_IU = np.nanmean(iu)
+    mDice = np.nanmean(dicescore)
+    mean_IU_no_back = np.nanmean(iu[1:])
+    freq = hist.sum(1) / hist.sum()
+    freq_IU = (iu[freq > 0] * freq[freq > 0]).sum()
+    mean_pixel_acc = correct / labeled
+
+    return iu, mean_IU, mean_IU_no_back, mean_pixel_acc, mDice
 
 # ade metric
 def meanIoU(area_intersection, area_union):

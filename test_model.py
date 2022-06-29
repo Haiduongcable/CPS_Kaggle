@@ -20,5 +20,7 @@ left = torch.randn(2, 3, 128, 128)
 # print(model.branch1)
 
 pred, representation = model(left)
+
+print(pred)
 print(pred.shape)
 print(representation.shape)

@@ -13,7 +13,7 @@ from config.config import config
 from utils.pyt_utils import ensure_dir, link_file, load_model, parse_devices
 from utils.visualize import print_iou, show_img
 from utils.evaluator import Evaluator
-from utils.metric import hist_info, compute_score
+from utils.metric import hist_info, compute_score, compute_score_dice_IOU
 from dataloader.dataloader import VOC
 from dataloader.dataloader import ValPre
 from model.model import Network
@@ -98,13 +98,16 @@ class SegEvaluator(Evaluator):
             labeled += d['labeled']
             count += 1
 
-        iu, mean_IU, _, mean_pixel_acc = compute_score(hist, correct,
+        iu, mean_IU, _, mean_pixel_acc, meanDice = compute_score_dice_IOU(hist, correct,
                                                        labeled)
         # print(len(dataset.get_class_names()))
         result_line = print_iou(iu, mean_pixel_acc,
                                 self.dataset.get_class_names(), True)
         meanIU = np.nanmean(iu)
-        return result_line, meanIU
+        return result_line, meanIU, meanDice
+    
+    
+    
     
     def run_model(self, model):
         """There are four evaluation modes:
@@ -115,8 +118,8 @@ class SegEvaluator(Evaluator):
             """
         model.eval()
         self.val_func = model
-        result_line, meanIU = self.single_process_evalutation()
-        return meanIU
+        result_line, meanIU, meanDice = self.single_process_evalutation()
+        return meanIU, meanDice
 
     
 

@@ -13,23 +13,14 @@ from PIL import Image
 from skimage.measure import label, regionprops
 
 
-@torch.no_grad()
-def gather_together(data):
-    dist.barrier()
 
-    world_size = dist.get_world_size()
-    gather_data = [None for _ in range(world_size)]
-    dist.all_gather_object(gather_data, data)
-
-    return gather_data
 
 
 @torch.no_grad()
 def dequeue_and_enqueue(keys, queue, queue_ptr, queue_size):
     # gather keys before updating queue
     keys = keys.detach().clone().cpu()
-    gathered_list = gather_together(keys)
-    keys = torch.cat(gathered_list, dim=0).cuda()
+    keys = torch.cat([keys], dim=0).cuda()
 
     batch_size = keys.shape[0]
 

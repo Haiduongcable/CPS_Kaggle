@@ -61,11 +61,11 @@ class Evaluator(object):
             dd = self.dataset[idx]
             results_dict = self.func_per_iteration(dd,self.devices[0])
             all_results.append(results_dict)
-        result_line, meanIU = self.compute_metric(all_results)
+        result_line, meanIU, meanDice = self.compute_metric(all_results)
         # logger.info(
         #     'Evaluation Elapsed Time: %.2fs' % (
         #             time.perf_counter() - start_eval_time))
-        return result_line, meanIU
+        return result_line, meanIU, meanDice
 
 
 

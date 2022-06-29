@@ -39,6 +39,11 @@ class Deeplabv3plus_representation(nn.Module):
         
     
     def forward(self, data):
+        if not self.training:
+            b, c, h, w = data.shape
+            block = self.backbone(data)
+            pred, _ = self.decoder(block, data_shape = (h,w))
+            return pred
         b, c, h, w = data.shape
         block = self.backbone(data)
         pred = self.decoder(block, data_shape = (h,w))

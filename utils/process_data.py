@@ -27,3 +27,15 @@ def expand_dataloader(labeled_image, labeled_mask, length_unlabeled_data):
     expand_labeled_mask = labeled_mask * ratio_data + [labeled_mask[item] for item in random_index_rest_dataset]
     return expand_labeled_image, expand_labeled_mask
 
+
+def label_onehot(inputs, num_segments):
+    batch_size, im_h, im_w = inputs.shape
+    outputs = torch.zeros((num_segments, batch_size, im_h, im_w)).cuda()
+
+    inputs_temp = inputs.clone()
+    inputs_temp[inputs == 255] = 0
+    outputs.scatter_(0, inputs_temp.unsqueeze(1), 1.0)
+    outputs[:, inputs == 255] = 0
+
+    return outputs.permute(1, 0, 2, 3)
+

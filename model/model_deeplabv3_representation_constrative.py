@@ -20,9 +20,13 @@ class Network(nn.Module):
 
     def forward(self, data, step=1):
         if not self.training:
-            pred, _ = self.branch1(data)
+            # print("evaluation")
+            if step == 1:
+                pred, _ = self.branch1(data)
+            elif step == 2:
+                pred, _ = self.branch2(data)
             return pred
-        
+        # print('training')
         if step == 1:
             return self.branch1(data)
         elif step == 2:
