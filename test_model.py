@@ -2,16 +2,14 @@ import os
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
-from modules.base_model.deeplabv3_representation_constrative import Deeplabv3plus_representation
-
+from model.model_segformer_representation_contrastive import NetworkSegformerRepresentation
+from config.config_contrastive_unreliable import config
 
 device = torch.device("cuda")
-model = Deeplabv3plus_representation(40,
-                pretrained_model=None,
-                norm_layer=nn.BatchNorm2d, type_backbone='resnet101')
-
+path_pretrained = "pretrained/mit_b2.pth"
+model = NetworkSegformerRepresentation(config.num_classes, pretrained = path_pretrained)
 # model.to(device)
-model.eval()
+# model.eval()
 # summary(model, (3,128,128))
 left = torch.randn(2, 3, 128, 128)
 # left.to(device)
@@ -19,8 +17,8 @@ left = torch.randn(2, 3, 128, 128)
 
 # print(model.branch1)
 
-pred, representation = model(left)
+pred, rep = model(left)
 
-print(pred)
 print(pred.shape)
-print(representation.shape)
+print(rep.shape)
+# print(representation.shape)

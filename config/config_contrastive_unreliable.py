@@ -31,7 +31,7 @@ C.link_val_log_file = C.log_dir + '/val_last.log'
 '''Contrastive loss'''
 #config contrastive loss and unsupervised loss
 C.drop_percent = 80 
-C.ratio_aug_cutmix = 0.3
+C.ratio_aug_cutmix = 0.4
 C.unsupervised_loss_weight = 1
 C.low_entropy_threshold = 20
 C.current_class_threshold = 0.3 

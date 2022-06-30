@@ -6,7 +6,7 @@ from functools import partial
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from mmcv.runner import load_checkpoint
 import math
-
+from torchsummary import summary
 '''
 Function DropPath, to_2tuple, trunc_normal 
 Function load_checkpoint
@@ -406,3 +406,21 @@ class mit_b5(MixVisionTransformer):
             qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 6, 40, 3], sr_ratios=[8, 4, 2, 1],
             drop_rate=0.0, drop_path_rate=0.1)
 
+
+
+if __name__ == '__main__':
+    device = torch.device("cuda")
+    backbone = mit_b2()
+    backbone.to(device)
+   
+    # model.to(device)
+    #backbone.eval()
+    # summary(backbone, (3,128,128))
+    # input_image = torch.randn(4, 3, 512, 512)
+    # input_image = input_image.to(device)
+    # output = backbone(input_image)
+    # for feature in output: 
+    #     print(feature.shape)
+    path_checkpoint = '/home/asilla/duongnh/project/Analys_COCO/tmp_folder/CrossPseudo_UpdateBranch/CPS_Kaggle/pretrained/mit_b2.pth'
+    model = load_checkpoint_mit(backbone, path_checkpoint)
+    #load checkpoitn
