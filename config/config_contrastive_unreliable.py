@@ -44,10 +44,10 @@ C.num_negatives = 50
 
 
 """ Data Dir and Weight Dir """
-C.dataset_path = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
-C.img_root_folder = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
-C.gt_root_folder = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pascal_voc"
-C.pretrained_model = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pytorch-weight/resnet50_v1c.pth"
+C.dataset_path = "/home/asilla/duongnh/project/CrossPseudo_UpdateBranch/DATA_CPS/pascal_voc"
+C.img_root_folder = "/home/asilla/duongnh/project/CrossPseudo_UpdateBranch/DATA_CPS/pascal_voc"
+C.gt_root_folder = "/home/asilla/duongnh/project/CrossPseudo_UpdateBranch/DATA_CPS/pascal_voc"
+C.pretrained_model = "/home/asilla/duongnh/project/CrossPseudo_UpdateBranch/DATA_CPS/pytorch-weight/resnet101_v1c.pth"
 C.path_save_checkpoint = "weights"
 
 

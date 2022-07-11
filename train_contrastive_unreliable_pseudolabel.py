@@ -34,7 +34,7 @@ if config.use_wandb:
 
     wandb.login(key="88d5e168a5043d5ca6a1d3e4050ec957a3e702d4")
 
-    wandb.init(project = "Cross Pseudo Label Deeplabv3+ Unreliable PseudoLabel Contrastive learning")
+    wandb.init(project = "Cross Pseudo Label Deeplabv3+ ResNet 101 Unreliable PseudoLabel Contrastive learning ")
 
 
 cudnn.benchmark = True
@@ -56,7 +56,7 @@ supervised_criterion = nn.CrossEntropyLoss(reduction='mean', ignore_index=255)
 # define and init the model
 model = Network(config.num_classes,
                 pretrained_model=config.pretrained_model,
-                norm_layer=BatchNorm2d, type_backbone='resnet50')
+                norm_layer=BatchNorm2d, type_backbone='resnet101')
 init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
             BatchNorm2d, config.bn_eps, config.bn_momentum,
             mode='fan_in', nonlinearity='relu')
@@ -104,7 +104,7 @@ for i in range(config.num_classes):
     queue_size.append(30000)
     queue_ptrlis.append(torch.zeros(1, dtype=torch.long))
 queue_size[0] = 50000
-path_save = "weights/last_model_contrastive_unreliable.pth"
+path_save = "weights/last_model_contrastive_unreliable_resnet101.pth"
 best_mIOU = 0 
 for epoch in range(s_epoch, config.total_epoch):
     model.train()
@@ -186,19 +186,23 @@ for epoch in range(s_epoch, config.total_epoch):
                                  config.eval_scale_array, config.eval_flip,
                                  ["cuda"], False, None,
                                  False)
-        m_IOU_deeplabv3_1 = segmentor.run_model(model.branch2)
-        m_IOU_deeplabv3_2 = segmentor.run_model(model.branch1)
+        m_IOU_deeplabv3_1, mDice_deeplabv3_1 = segmentor.run_model(model.branch2)
+        m_IOU_deeplabv3_2, mDice_deeplabv3_2 = segmentor.run_model(model.branch1)
         average_mIOU = (m_IOU_deeplabv3_1 + m_IOU_deeplabv3_2)/2
         if average_mIOU > best_mIOU:
             best_mIOU = average_mIOU
-            save_bestcheckpoint(model, optimizer_l, optimizer_r, "weight/best_contrastive_deeplab_resnet50.pth")
+            save_bestcheckpoint(model, optimizer_l, optimizer_r, "weights/best_contrastive_deeplab_resnet101.pth")
     print("mIOU deeplabv3 branch 1",m_IOU_deeplabv3_1)
-    print("mIOU deeplabv3 branch 1", m_IOU_deeplabv3_2)
+    print("mIOU deeplabv3 branch 2", mDice_deeplabv3_2)
+    print("mDice deeplabv3 branch 1",m_IOU_deeplabv3_1)
+    print("mDice deeplabv3 branch 2", mDice_deeplabv3_2)
     save_bestcheckpoint(model, optimizer_l, optimizer_r, path_save)
     
     if config.use_wandb:
         wandb.log({"mIOU deeplabv3+ 1":  m_IOU_deeplabv3_1, "epoch": epoch})
         wandb.log({"mIOU deeplabv3+ 2":  m_IOU_deeplabv3_2, "epoch": epoch})
+        wandb.log({"mDice deeplabv3+ 1":  mDice_deeplabv3_1, "epoch": epoch})
+        wandb.log({"mDice deeplabv3+ 2":  mDice_deeplabv3_2, "epoch": epoch})
         wandb.log({"Supervised Training Loss left":  sum_loss_sup_l / len(pbar),"epoch": epoch})
         wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})
         wandb.log({"UnSupervised Training Loss left":  sum_unsup_l / len(pbar),"epoch": epoch})

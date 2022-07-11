@@ -141,8 +141,8 @@ for epoch in range(s_epoch, config.total_epoch):
         sum_loss_sup_r += sup_loss_r.item()
         sum_unsup_l += unsup_loss_l.item()
         sum_unsup_r += unsup_loss_r.item()
-        sum_contrastive_loss_l += contrastive_loss_l
-        sum_contrastive_loss_r += contrastive_loss_r
+        sum_contrastive_loss_l += contrastive_loss_l.item()
+        sum_contrastive_loss_r += contrastive_loss_r.item()
 
         end_time = time.time()
 
