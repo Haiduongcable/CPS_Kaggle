@@ -8,7 +8,7 @@ import numpy as np
 from functools import partial
 from collections import OrderedDict
 from config.config import config
-from modules.base_model import resnet50
+from modules.base_model import resnet50, resnet101
 from torchsummary import summary
 
 class Network(nn.Module):
@@ -30,7 +30,11 @@ class Network(nn.Module):
 class SingleNetwork(nn.Module):
     def __init__(self, num_classes, norm_layer, pretrained_model=None):
         super(SingleNetwork, self).__init__()
-        self.backbone = resnet50(pretrained_model, norm_layer=norm_layer,
+        # self.backbone = resnet50(pretrained_model, norm_layer=norm_layer,
+        #                           bn_eps=config.bn_eps,
+        #                           bn_momentum=config.bn_momentum,
+        #                           deep_stem=True, stem_width=64)
+        self.backbone = resnet101(pretrained_model, norm_layer=norm_layer,
                                   bn_eps=config.bn_eps,
                                   bn_momentum=config.bn_momentum,
                                   deep_stem=True, stem_width=64)

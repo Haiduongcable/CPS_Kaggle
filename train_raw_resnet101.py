@@ -13,20 +13,20 @@ import torch.nn.functional as F
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 
-from config.config_contrastive_unreliable import config
+from config.config import config
 from dataloader.dataloader import get_train_loader
-
-from model.model_deeplabv3_representation_constrative import Network
+# from model_efficientnet_backbone import Network
+from model.model import Network
 from dataloader.dataloader import VOC
 from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
 
-from utils.load_save_checkpoint import save_bestcheckpoint
+from utils.load_save_checkpoint import load_checkpoint, save_bestcheckpoint, save_checkpoint
 from torch.nn import BatchNorm2d
 from evaluation.eval_function import SegEvaluator
 from dataloader.dataloader import VOC
 from dataloader.dataloader import ValPre
-from utils.train_step_contrastive_learning import train_step
+
 if config.use_wandb:
     import wandb
 
@@ -34,7 +34,7 @@ if config.use_wandb:
 
     wandb.login(key="88d5e168a5043d5ca6a1d3e4050ec957a3e702d4")
 
-    wandb.init(project = "Cross Pseudo Label Deeplabv3+ ResNet 101 Unreliable PseudoLabel Contrastive learning ")
+    wandb.init(project = "Cross Pseudo Label Deeplabv3+ Resnet 101")
 
 
 cudnn.benchmark = True
@@ -49,14 +49,14 @@ train_loader, train_sampler = get_train_loader(VOC, train_source=config.train_so
 unsupervised_train_loader, unsupervised_train_sampler = get_train_loader(VOC, train_source=config.unsup_source, unsupervised=True)
 
 # config network and criterion
-supervised_criterion = nn.CrossEntropyLoss(reduction='mean', ignore_index=255)
+criterion = nn.CrossEntropyLoss(reduction='mean', ignore_index=255)
 
 
-
+path_pretrained_resnet101 = "/home/asilla/duongnh/project/CrossPseudo_UpdateBranch/DATA_CPS/pytorch-weight/resnet101_v1c.pth"
 # define and init the model
 model = Network(config.num_classes,
-                pretrained_model=config.pretrained_model,
-                norm_layer=BatchNorm2d, type_backbone='resnet101')
+                pretrained_model=path_pretrained_resnet101,
+                norm_layer=BatchNorm2d)
 init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
             BatchNorm2d, config.bn_eps, config.bn_momentum,
             mode='fan_in', nonlinearity='relu')
@@ -88,25 +88,16 @@ optimizer_r = torch.optim.SGD(params_list_r,
                             momentum=config.momentum,
                             weight_decay=config.weight_decay)
 
-total_iteration = config.total_epoch * config.niters_per_epoch
+total_iteration = config.nepochs * config.niters_per_epoch
 lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niters_per_epoch * config.warm_up_epoch)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 print('begin train')
+best_mIOU = 0
 s_epoch = 0
-
-memory_bank = []
-queue_ptrlis = []
-queue_size = []
-for i in range(config.num_classes):
-    memory_bank.append([torch.zeros(0, 256)])
-    queue_size.append(30000)
-    queue_ptrlis.append(torch.zeros(1, dtype=torch.long))
-queue_size[0] = 50000
-path_save = "weights/last_model_contrastive_unreliable_resnet101.pth"
-best_mIOU = 0 
-for epoch in range(s_epoch, config.total_epoch):
+path_save = "weights/best_deeplab_resnet101.pth"
+for epoch in range(s_epoch, config.nepochs):
     model.train()
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
 
@@ -118,10 +109,7 @@ for epoch in range(s_epoch, config.total_epoch):
 
     sum_loss_sup_l = 0
     sum_loss_sup_r = 0
-    sum_unsup_l = 0
-    sum_unsup_r = 0
-    sum_contrastive_loss_l = 0
-    sum_contrastive_loss_r = 0
+    sum_cps = 0
 
     for idx in pbar:
         optimizer_l.zero_grad()
@@ -136,16 +124,25 @@ for epoch in range(s_epoch, config.total_epoch):
         imgs = imgs.cuda(non_blocking=True)
         unsup_imgs = unsup_imgs.cuda(non_blocking=True)
         gts = gts.cuda(non_blocking=True)
-        sup_loss_l, unsup_loss_l, contrastive_loss_l =  train_step(model,imgs, gts, unsup_imgs,\
-                                                                    epoch,supervised_criterion,\
-                                                                    memory_bank, queue_ptrlis, queue_size,\
-                                                                    trained_model = 'left')
-        sup_loss_r, unsup_loss_r, contrastive_loss_r =  train_step(model,imgs, gts, unsup_imgs,\
-                                                                    epoch,supervised_criterion,\
-                                                                    memory_bank, queue_ptrlis, queue_size,\
-                                                                    trained_model = 'right')
+
+        b, c, h, w = imgs.shape
+        _, pred_sup_l = model(imgs, step=1)
+        _, pred_unsup_l = model(unsup_imgs, step=1)
+        _, pred_sup_r = model(imgs, step=2)
+        _, pred_unsup_r = model(unsup_imgs, step=2)
+
+        ### cps loss ###
+        pred_l = torch.cat([pred_sup_l, pred_unsup_l], dim=0)
+        pred_r = torch.cat([pred_sup_r, pred_unsup_r], dim=0)
+        _, max_l = torch.max(pred_l, dim=1)
+        _, max_r = torch.max(pred_r, dim=1)
+        max_l = max_l.long()
+        max_r = max_r.long()
         
-        
+        cps_loss = criterion(pred_l, max_r) + criterion(pred_r, max_l)
+        loss_sup_l = criterion(pred_sup_l, gts)
+        loss_sup_r = criterion(pred_sup_r, gts)
+
         current_idx = epoch * config.niters_per_epoch + idx
         lr = lr_policy.get_lr(current_idx)
 
@@ -159,16 +156,14 @@ for epoch in range(s_epoch, config.total_epoch):
         for i in range(2, len(optimizer_r.param_groups)):
             optimizer_r.param_groups[i]['lr'] = lr
 
-        loss = sup_loss_l + sup_loss_r + unsup_loss_l + unsup_loss_r + contrastive_loss_l + contrastive_loss_r
+        loss = loss_sup_l + loss_sup_r + cps_loss * config.cps_weight
         loss.backward()
         optimizer_l.step()
         optimizer_r.step()
-        sum_loss_sup_l += sup_loss_l.item()
-        sum_loss_sup_r += sup_loss_r.item()
-        sum_unsup_l += unsup_loss_l.item()
-        sum_unsup_r += unsup_loss_r.item()
-        sum_contrastive_loss_l += contrastive_loss_l.item()
-        sum_contrastive_loss_r += contrastive_loss_r.item()
+        sum_loss_sup_l += loss_sup_l.item()
+        sum_loss_sup_r += loss_sup_r.item()
+        sum_cps += cps_loss.item()
+        # pbar.set_description(print_str, refresh=False)
 
         end_time = time.time()
 
@@ -179,33 +174,30 @@ for epoch in range(s_epoch, config.total_epoch):
 
     val_pre = ValPre()
     dataset = VOC(data_setting, 'val', val_pre, training=False)
-    model.eval()
+
     with torch.no_grad():
         segmentor = SegEvaluator(dataset, config.num_classes, config.image_mean,
                                  config.image_std, None,
                                  config.eval_scale_array, config.eval_flip,
                                  ["cuda"], False, None,
                                  False)
-        m_IOU_deeplabv3_1, mDice_deeplabv3_1 = segmentor.run_model(model.branch2)
-        m_IOU_deeplabv3_2, mDice_deeplabv3_2 = segmentor.run_model(model.branch1)
+        m_IOU_deeplabv3_1, mDice_deeplab_1 = segmentor.run_model(model.branch2)
+        m_IOU_deeplabv3_2, mDice_deeplab_2 = segmentor.run_model(model.branch1)
         average_mIOU = (m_IOU_deeplabv3_1 + m_IOU_deeplabv3_2)/2
         if average_mIOU > best_mIOU:
-            best_mIOU = average_mIOU
-            save_bestcheckpoint(model, optimizer_l, optimizer_r, "weights/best_contrastive_deeplab_resnet101.pth")
+            best_mIOU = average_mIOU 
+            save_bestcheckpoint(model, optimizer_l, optimizer_r, path_save)
     print("mIOU deeplabv3 branch 1",m_IOU_deeplabv3_1)
-    print("mIOU deeplabv3 branch 2", mDice_deeplabv3_2)
-    print("mDice deeplabv3 branch 1",m_IOU_deeplabv3_1)
-    print("mDice deeplabv3 branch 2", mDice_deeplabv3_2)
-    save_bestcheckpoint(model, optimizer_l, optimizer_r, path_save)
+    print("mIOU deeplabv3 branch 1", m_IOU_deeplabv3_2)
+    print('mDice deeplab branch 1', mDice_deeplab_1)
+    print('mDice deeplab branch 2', mDice_deeplab_2)
+    save_bestcheckpoint(model, optimizer_l, optimizer_r, "weights/last_deeplab_resnet101.pth")
     
     if config.use_wandb:
         wandb.log({"mIOU deeplabv3+ 1":  m_IOU_deeplabv3_1, "epoch": epoch})
         wandb.log({"mIOU deeplabv3+ 2":  m_IOU_deeplabv3_2, "epoch": epoch})
-        wandb.log({"mDice deeplabv3+ 1":  mDice_deeplabv3_1, "epoch": epoch})
-        wandb.log({"mDice deeplabv3+ 2":  mDice_deeplabv3_2, "epoch": epoch})
+        wandb.log({"mDice deeplabv3+ 1": mDice_deeplab_1, "epoch": epoch})
+        wandb.log({"mDice deeplabv3+ 2": mDice_deeplab_2, "epoch": epoch})
         wandb.log({"Supervised Training Loss left":  sum_loss_sup_l / len(pbar),"epoch": epoch})
         wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})
-        wandb.log({"UnSupervised Training Loss left":  sum_unsup_l / len(pbar),"epoch": epoch})
-        wandb.log({"UnSupervised Training Loss right":  sum_unsup_r / len(pbar),"epoch": epoch})
-        wandb.log({"Contrastive Training Loss left":  sum_contrastive_loss_l / len(pbar),"epoch": epoch})
-        wandb.log({"Contrastive Training Loss right":  sum_contrastive_loss_r / len(pbar),"epoch": epoch})
+        wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar),"epoch": epoch})
