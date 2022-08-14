@@ -21,7 +21,7 @@ from dataloader.dataloader import VOC
 from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
 
-from utils.load_save_checkpoint import load_checkpoint, save_checkpoint
+from utils.load_save_checkpoint import load_checkpoint, save_bestcheckpoint, save_checkpoint
 from torch.nn import BatchNorm2d
 from evaluation.eval_function import SegEvaluator
 from dataloader.dataloader import VOC
@@ -30,11 +30,11 @@ from dataloader.dataloader import ValPre
 if config.use_wandb:
     import wandb
 
-    os.environ["WANDB_API_KEY"] = "351cc1ebc0d966d49152a4c1937915dd4e7b4ef5"
+    os.environ["WANDB_API_KEY"] = "88d5e168a5043d5ca6a1d3e4050ec957a3e702d4"
 
-    wandb.login(key="351cc1ebc0d966d49152a4c1937915dd4e7b4ef5")
+    wandb.login(key="88d5e168a5043d5ca6a1d3e4050ec957a3e702d4")
 
-    wandb.init(project = "Cross Pseudo Label Deeplabv3+ Raw")
+    wandb.init(project = "Cross Pseudo Label Deeplabv3+ Resnet 50")
 
 
 cudnn.benchmark = True
@@ -50,12 +50,12 @@ unsupervised_train_loader, unsupervised_train_sampler = get_train_loader(VOC, tr
 
 # config network and criterion
 criterion = nn.CrossEntropyLoss(reduction='mean', ignore_index=255)
-criterion_csst = nn.MSELoss(reduction='mean')
 
 
+path_pretrained_resnet101 = "/home/asilla/duongnh/project/CrossPseudo_UpdateBranch/DATA_CPS/pytorch-weight/resnet101_v1c.pth"
 # define and init the model
 model = Network(config.num_classes,
-                pretrained_model=config.pretrained_model,
+                pretrained_model=path_pretrained_resnet101,
                 norm_layer=BatchNorm2d)
 init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
             BatchNorm2d, config.bn_eps, config.bn_momentum,
@@ -94,8 +94,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 print('begin train')
+best_mIOU = 0
 s_epoch = 0
-setting_config_lambda = []
+path_save = "weights/best_deeplab_resnet101.pth"
 for epoch in range(s_epoch, config.nepochs):
     model.train()
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
@@ -180,15 +181,23 @@ for epoch in range(s_epoch, config.nepochs):
                                  config.eval_scale_array, config.eval_flip,
                                  ["cuda"], False, None,
                                  False)
-        m_IOU_deeplabv3_1 = segmentor.run_model(model.branch2)
-        m_IOU_deeplabv3_2 = segmentor.run_model(model.branch1)
+        m_IOU_deeplabv3_1, mDice_deeplab_1 = segmentor.run_model(model.branch2)
+        m_IOU_deeplabv3_2, mDice_deeplab_2 = segmentor.run_model(model.branch1)
+        average_mIOU = (m_IOU_deeplabv3_1 + m_IOU_deeplabv3_2)/2
+        if average_mIOU > best_mIOU:
+            best_mIOU = average_mIOU 
+            save_bestcheckpoint(model, optimizer_l, optimizer_r, path_save)
     print("mIOU deeplabv3 branch 1",m_IOU_deeplabv3_1)
     print("mIOU deeplabv3 branch 1", m_IOU_deeplabv3_2)
-    save_checkpoint(model, optimizer_l, optimizer_r, epoch)
+    print('mDice deeplab branch 1', mDice_deeplab_1)
+    print('mDice deeplab branch 2', mDice_deeplab_2)
+    save_bestcheckpoint(model, optimizer_l, optimizer_r, "weights/last_deeplab_resnet101.pth")
     
     if config.use_wandb:
         wandb.log({"mIOU deeplabv3+ 1":  m_IOU_deeplabv3_1, "epoch": epoch})
         wandb.log({"mIOU deeplabv3+ 2":  m_IOU_deeplabv3_2, "epoch": epoch})
+        wandb.log({"mDice deeplabv3+ 1": mDice_deeplab_1, "epoch": epoch})
+        wandb.log({"mDice deeplabv3+ 2": mDice_deeplab_2, "epoch": epoch})
         wandb.log({"Supervised Training Loss left":  sum_loss_sup_l / len(pbar),"epoch": epoch})
         wandb.log({"Supervised Training Loss right":  sum_loss_sup_r / len(pbar),"epoch": epoch})
         wandb.log({"Supervised Training Loss CPS":  sum_cps / len(pbar),"epoch": epoch})
