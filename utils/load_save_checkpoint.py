@@ -151,8 +151,6 @@ def load_only_checkpoint(path_checkpoint, network):
     return: model, optimizer_l, optimizer_r
     '''
     state_dict = torch.load(path_checkpoint)
-    print(state_dict['model'].keys())
-
     model = load_model(network, state_dict['model'], False)
     del state_dict
     print("Load checkpoint from file {}".format(path_checkpoint))

@@ -56,7 +56,7 @@ supervised_criterion = nn.CrossEntropyLoss(reduction='mean', ignore_index=255)
 # define and init the model
 model = Network(config.num_classes,
                 pretrained_model=config.pretrained_model,
-                norm_layer=BatchNorm2d, type_backbone='resnet101')
+                norm_layer=BatchNorm2d, type_backbone='resnet50')
 init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
             BatchNorm2d, config.bn_eps, config.bn_momentum,
             mode='fan_in', nonlinearity='relu')
@@ -104,7 +104,7 @@ for i in range(config.num_classes):
     queue_size.append(30000)
     queue_ptrlis.append(torch.zeros(1, dtype=torch.long))
 queue_size[0] = 50000
-path_save = "weights/last_model_contrastive_unreliable_resnet101.pth"
+path_save = "weights/last_model_contrastive_unreliable_resnet50.pth"
 best_mIOU = 0 
 for epoch in range(s_epoch, config.total_epoch):
     model.train()
@@ -191,7 +191,7 @@ for epoch in range(s_epoch, config.total_epoch):
         average_mIOU = (m_IOU_deeplabv3_1 + m_IOU_deeplabv3_2)/2
         if average_mIOU > best_mIOU:
             best_mIOU = average_mIOU
-            save_bestcheckpoint(model, optimizer_l, optimizer_r, "weights/best_contrastive_deeplab_resnet101.pth")
+            save_bestcheckpoint(model, optimizer_l, optimizer_r, "weights/best_contrastive_deeplab_resnet50.pth")
     print("mIOU deeplabv3 branch 1",m_IOU_deeplabv3_1)
     print("mIOU deeplabv3 branch 2", mDice_deeplabv3_2)
     print("mDice deeplabv3 branch 1",m_IOU_deeplabv3_1)

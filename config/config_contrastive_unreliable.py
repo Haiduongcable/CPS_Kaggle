@@ -52,7 +52,7 @@ C.path_save_checkpoint = "weights"
 
 
 ''' Experiments Setting '''
-C.labeled_ratio = 4   # ratio of labeled set
+C.labeled_ratio = 8  # ratio of labeled set
 C.train_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_labeled_1-{}.txt".format(C.labeled_ratio))
 C.unsup_source = osp.join(C.dataset_path, "subset_train_aug/train_aug_unlabeled_1-{}.txt".format(C.labeled_ratio))
 

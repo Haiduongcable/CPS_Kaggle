@@ -20,9 +20,9 @@ class NetworkSegformerRepresentation(nn.Module):
         self.branch2 = EncoderDecoderSegformer(backbone_cfg='mitb2', num_classes = num_classes, pretrained=pretrained)
 
     def forward(self, data, step=1):
-        if not self.training:
-            pred1 = self.branch1(data)
-            return pred1
+        # if not self.training:
+        #     pred1 = self.branch1(data)
+        #     return pred1
 
         if step == 1:
             return self.branch1(data)

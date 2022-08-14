@@ -16,7 +16,8 @@ from config.config import config
 from model.model import Network
 # from model.model_deeplabv3_adv import Network
 # from model.model_segformer_2_branch import Network
-from model.model_segformer_deeplabv3 import Network
+from model.model_segformer_representation_contrastive import NetworkSegformerRepresentation
+# from model.model_segformer_deeplabv3 import Network
 from dataloader.dataloader import VOC
 from utils.init_func import init_weight, group_weight
 from lr_policy import WarmUpPolyLR
@@ -130,22 +131,22 @@ num_class = 1
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cuda")
 num_class = 1
-# network = Network(num_class)
+network = NetworkSegformerRepresentation(num_class)
 # network = Network(num_class,pretrained_model=config.pretrained_model, norm_layer=BatchNorm2d)
 
-path_resnet101 = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pytorch-weight/resnet101_v1c.pth"
-# define and init the model
-num_classes = 1
-network = Network(num_classes, criterion=None,
-                pretrained_model=path_resnet101,
-                norm_layer=BatchNorm2d)
+# path_resnet101 = "/home/asilla/duongnh/project/Analys_COCO/tmp_folder/DATA_CPS/pytorch-weight/resnet101_v1c.pth"
+# # define and init the model
+# num_classes = 1
+# network = Network(num_classes, criterion=None,
+#                 pretrained_model=path_resnet101,
+#                 norm_layer=BatchNorm2d)
 network.to(device)
 # 
 
 
 s_epoch = 0
 lambda_cross_entropy = 1
-model = load_only_checkpoint("medical_weight/best_deeplabresnet101_segformer.pth", network)
+model = load_only_checkpoint("weights/last_model_segformer_contrastive_unreliable.pth", network)
 model.eval()
 
 dir_test = "../Dataset/TestDataset"

@@ -76,15 +76,22 @@ model.to(device)
 print('begin train')
 s_epoch = 0
 
-memory_bank = []
-queue_ptrlis = []
-queue_size = []
+memory_bank_left = []
+memory_bank_right = []
+queue_ptrlis_left = []
+queue_size_left = []
+queue_ptrlis_right = []
+queue_size_right = []
 for i in range(config.num_classes):
-    memory_bank.append([torch.zeros(0, 256)])
-    queue_size.append(30000)
-    queue_ptrlis.append(torch.zeros(1, dtype=torch.long))
-queue_size[0] = 50000
-path_save = "weights/last_model_segformer_contrastive_unreliable.pth"
+    memory_bank_left.append([torch.zeros(0, 256)])
+    memory_bank_right.append([torch.zeros(0, 256)])
+    queue_size_left.append(30000)
+    queue_ptrlis_left.append(torch.zeros(1, dtype=torch.long))
+    queue_size_right.append(30000)
+    queue_ptrlis_right.append(torch.zeros(1, dtype=torch.long))
+queue_size_left[0] = 50000
+queue_size_right[0] = 50000
+path_save = "weights/last_model_segformer_contrastive_unreliable_31_07.pth"
 best_mIOU = 0 
 for epoch in range(s_epoch, config.total_epoch):
     model.train()
@@ -118,11 +125,11 @@ for epoch in range(s_epoch, config.total_epoch):
         gts = gts.cuda(non_blocking=True)
         sup_loss_l, unsup_loss_l, contrastive_loss_l =  train_step(model,imgs, gts, unsup_imgs,\
                                                                     epoch,supervised_criterion,\
-                                                                    memory_bank, queue_ptrlis, queue_size,\
+                                                                    memory_bank_left, queue_ptrlis_left, queue_size_left,\
                                                                     trained_model = 'left')
         sup_loss_r, unsup_loss_r, contrastive_loss_r =  train_step(model,imgs, gts, unsup_imgs,\
                                                                     epoch,supervised_criterion,\
-                                                                    memory_bank, queue_ptrlis, queue_size,\
+                                                                    memory_bank_right, queue_ptrlis_right, queue_size_right,\
                                                                     trained_model = 'right')
         
         
@@ -165,7 +172,7 @@ for epoch in range(s_epoch, config.total_epoch):
         average_mIOU = (m_IOU_segformer_1 + m_IOU_segformer_2)/2
         if average_mIOU > best_mIOU:
             best_mIOU = average_mIOU
-            save_bestcheckpoint(model, optimizer_l, optimizer_r, "weights/best_contrastive_segformer_b2.pth")
+            save_bestcheckpoint(model, optimizer_l, optimizer_r, "weights/best_contrastive_segformer_b2_31_07.pth")
     print("mIOU segformer branch 1",m_IOU_segformer_1)
     print("mIOU segformer branch 1", m_IOU_segformer_2)
     print("mDice segformer branch 1",mDice_segformer_1)
